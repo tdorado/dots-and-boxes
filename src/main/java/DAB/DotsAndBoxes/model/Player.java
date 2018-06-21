@@ -32,8 +32,8 @@ public class Player implements Serializable {
         this.points = points;
     }
 
-    public boolean makeMove(Move move){
-        return App.getInstance().getGameBoard().makeMove(new Move(move, this));
+    public void makeMove(Move move){
+        App.getInstance().getBoard().makeMove(new Move(move, this));
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {

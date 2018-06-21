@@ -88,10 +88,10 @@ public class AIPlayer extends Player implements Serializable {
      */
     private int minimaxDepthRec(int movesCount, MoveState previousMoveState, int depth, boolean sameLevel, boolean maxOrMin) {
         if (maxOrMin) {  // MAX
-            if (!App.getInstance().getGameBoard().getPossibleMoves().isEmpty()) {
+            if (!App.getInstance().getBoard().getPossibleMoves().isEmpty()) {
                 if (sameLevel) { // MAX CON VARIOS MOVS
                     boolean firstEntry = true;
-                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getGameBoard().getPossibleMoves().clone();
+                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getBoard().getPossibleMoves().clone();
                     for (Move move : possibleMoves) {
                         int auxMovesCount = movesCount;
                         movesCount++;
@@ -125,12 +125,12 @@ public class AIPlayer extends Player implements Serializable {
                             }
                         }
                         while (movesCount > auxMovesCount) {
-                            App.getInstance().getGameBoard().undoLastMove();
+                            App.getInstance().getBoard().undoLastMove();
                             movesCount--;
                         }
                     }
                 } else { // MAX CON UN SOLO MOV
-                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getGameBoard().getPossibleMoves().clone();
+                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getBoard().getPossibleMoves().clone();
                     for (Move move : possibleMoves) {
                         movesCount++;
                         App.getInstance().getCurrentPlayer().makeMove(move);
@@ -152,7 +152,7 @@ public class AIPlayer extends Player implements Serializable {
                             }
                         }
                         while (movesCount > 0) {
-                            App.getInstance().getGameBoard().undoLastMove();
+                            App.getInstance().getBoard().undoLastMove();
                             movesCount--;
                         }
                     }
@@ -166,10 +166,10 @@ public class AIPlayer extends Player implements Serializable {
                     previousMoveState.chosen = currentMoveState;
             }
         } else { // MIN
-            if (!App.getInstance().getGameBoard().getPossibleMoves().isEmpty()) {
+            if (!App.getInstance().getBoard().getPossibleMoves().isEmpty()) {
                 if (sameLevel) { //MIN CON VARIOS MOVS
                     boolean firstEntry = true;
-                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getGameBoard().getPossibleMoves().clone();
+                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getBoard().getPossibleMoves().clone();
                     for (Move move : possibleMoves) {
                         int auxMovesCount = movesCount;
                         movesCount++;
@@ -217,12 +217,12 @@ public class AIPlayer extends Player implements Serializable {
                             }
                         }
                         while (movesCount > auxMovesCount) {
-                            App.getInstance().getGameBoard().undoLastMove();
+                            App.getInstance().getBoard().undoLastMove();
                             movesCount--;
                         }
                     }
                 } else { //MIN CON UN SOLO MOV
-                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getGameBoard().getPossibleMoves().clone();
+                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getBoard().getPossibleMoves().clone();
                     for (Move move : possibleMoves) {
                         movesCount++;
                         App.getInstance().getCurrentPlayer().makeMove(move);
@@ -259,7 +259,7 @@ public class AIPlayer extends Player implements Serializable {
                             }
                         }
                         while (movesCount > 0) {
-                            App.getInstance().getGameBoard().undoLastMove();
+                            App.getInstance().getBoard().undoLastMove();
                             movesCount--;
                         }
                     }
@@ -288,10 +288,10 @@ public class AIPlayer extends Player implements Serializable {
      */
     private int minimaxTimeRec(int movesCount, MoveState previousMoveState, boolean sameLevel, boolean maxOrMin, long secondsMax) {
         if (maxOrMin) {  // MAX
-            if (!App.getInstance().getGameBoard().getPossibleMoves().isEmpty()) {
+            if (!App.getInstance().getBoard().getPossibleMoves().isEmpty()) {
                 if (sameLevel) { // MAX CON VARIOS MOVS
                     boolean firstEntry = true;
-                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getGameBoard().getPossibleMoves().clone();
+                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getBoard().getPossibleMoves().clone();
                     for (Move move : possibleMoves) {
                         boolean timeFlag = false;
                         int auxMovesCount = movesCount;
@@ -329,7 +329,7 @@ public class AIPlayer extends Player implements Serializable {
                             }
                         }
                         while (movesCount > auxMovesCount) {
-                            App.getInstance().getGameBoard().undoLastMove();
+                            App.getInstance().getBoard().undoLastMove();
                             movesCount--;
                         }
                         if (timeFlag) {
@@ -337,7 +337,7 @@ public class AIPlayer extends Player implements Serializable {
                         }
                     }
                 } else { // MAX CON UN SOLO MOV
-                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getGameBoard().getPossibleMoves().clone();
+                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getBoard().getPossibleMoves().clone();
                     for (Move move : possibleMoves) {
                         boolean timeFlag = false;
                         movesCount++;
@@ -363,7 +363,7 @@ public class AIPlayer extends Player implements Serializable {
                             }
                         }
                         while (movesCount > 0) {
-                            App.getInstance().getGameBoard().undoLastMove();
+                            App.getInstance().getBoard().undoLastMove();
                             movesCount--;
                         }
                         if (timeFlag) {
@@ -380,10 +380,10 @@ public class AIPlayer extends Player implements Serializable {
                     previousMoveState.chosen = currentMoveState;
             }
         } else { // MIN
-            if (!App.getInstance().getGameBoard().getPossibleMoves().isEmpty()) {
+            if (!App.getInstance().getBoard().getPossibleMoves().isEmpty()) {
                 if (sameLevel) { //MIN CON VARIOS MOVS
                     boolean firstEntry = true;
-                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getGameBoard().getPossibleMoves().clone();
+                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getBoard().getPossibleMoves().clone();
                     for (Move move : possibleMoves) {
                         boolean timeFlag = false;
                         int auxMovesCount = movesCount;
@@ -437,7 +437,7 @@ public class AIPlayer extends Player implements Serializable {
                             }
                         }
                         while (movesCount > auxMovesCount) {
-                            App.getInstance().getGameBoard().undoLastMove();
+                            App.getInstance().getBoard().undoLastMove();
                             movesCount--;
                         }
                         if (timeFlag) {
@@ -445,7 +445,7 @@ public class AIPlayer extends Player implements Serializable {
                         }
                     }
                 } else { //MIN CON UN SOLO MOV
-                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getGameBoard().getPossibleMoves().clone();
+                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getBoard().getPossibleMoves().clone();
                     for (Move move : possibleMoves) {
                         boolean timeFlag = false;
                         movesCount++;
@@ -486,7 +486,7 @@ public class AIPlayer extends Player implements Serializable {
                             }
                         }
                         while (movesCount > 0) {
-                            App.getInstance().getGameBoard().undoLastMove();
+                            App.getInstance().getBoard().undoLastMove();
                             movesCount--;
                         }
                         if (timeFlag) {
@@ -512,7 +512,7 @@ public class AIPlayer extends Player implements Serializable {
      * @return int heuristic value
      */
     private int heuristicValue() {
-        if (App.getInstance().getGameBoard().isOver()) {
+        if (App.getInstance().getBoard().isOver()) {
             if (getOtherPlayer().getPoints() > points) {
                 return beta;
             } else if (getOtherPlayer().getPoints() < points) {

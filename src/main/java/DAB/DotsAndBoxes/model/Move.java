@@ -17,30 +17,16 @@ public class Move implements Serializable, Cloneable {
     private int pointsDone;
     private Player player;
 
-    public Move(Move move, Player player){
-        this(move.getRowFrom(), move.getColFrom(), move.getRowTo(), move.getColTo());
+    Move(Move move, Player player){
+        this(move.rowFrom, move.colFrom, move.rowTo, move.colTo);
         this.player = player;
     }
 
     public Move(int rowFrom, int colFrom, int rowTo, int colTo) {
-        /*The HashCode and equals implementation assumes that the From position is lower than the To position,
-        so we have to check this here just in case. */
-        if (rowFrom > rowTo) {
-            this.rowFrom = rowTo;
-            this.colFrom = colFrom;
-            this.rowTo = rowFrom;
-            this.colTo = colTo;
-        } else if (colFrom > colTo) {
-            this.rowFrom = rowFrom;
-            this.colFrom = colTo;
-            this.rowTo = rowTo;
-            this.colTo = colFrom;
-        } else {
-            this.rowFrom = rowFrom;
-            this.colFrom = colFrom;
-            this.rowTo = rowTo;
-            this.colTo = colTo;
-        }
+        this.rowFrom = rowFrom;
+        this.colFrom = colFrom;
+        this.rowTo = rowTo;
+        this.colTo = colTo;
         this.pointsDone = 0;
         this.player = null;
     }
@@ -53,19 +39,11 @@ public class Move implements Serializable, Cloneable {
         return colFrom;
     }
 
-    public int getRowTo() {
-        return rowTo;
-    }
-
-    public int getColTo() {
-        return colTo;
-    }
-
-    public int getPointsDone() {
+    int getPointsDone() {
         return pointsDone;
     }
 
-    public void setPointsDone(int pointsDone){
+    void setPointsDone(int pointsDone){
         this.pointsDone = pointsDone;
     }
 

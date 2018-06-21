@@ -22,17 +22,17 @@ public class BoardPane extends Pane {
     private static final int RADIUS = 6;
     private static final int LINE_EXTEND = 4;
     private static final int LINE_DISTANCE = 18;
-    private TextField textField = new TextField("(fileName)");
+    private TextField textField = new TextField("Insert name for the file");
+    private Button saveGameButton = new Button("SAVE GAME");
+    private Button createDotFileButton = new Button("DOT FILE");
+    private Button undoMoveButton = new Button("UNDO MOVE");
+    private Button nextTurnButton = new Button("NEXT TURN(ONLY AI)");
     private Text currentTurnText = new Text(650, 275, "0");
     private Text pointsText = new Text(650, 300, "Points:");
     private Text player1PointsText = new Text(650, 325, "0");
     private Text player2PointsText = new Text(650, 350, "0");
     private Text errorFileText = new Text(650, 375, "Error while creating file");
-    private Text gameEndedText = new Text(650, 400, "Partida Terminada");
-    private Button nextTurnButton = new Button("NEXT TURN(AI)");
-    private Button undoMoveButton = new Button("UNDO MOVE");
-    private Button saveGameButton = new Button("SAVE GAME");
-    private Button createDotFileButton = new Button("DOT FILE");
+    private Text gameEndedText = new Text(650, 400, "Game finished");
 
     public BoardPane() {
         initializeBoard();
@@ -59,7 +59,7 @@ public class BoardPane extends Pane {
                 currentTurnText.setText("Turn: Player 2");
             }
         }
-        if(!App.getInstance().getGameBoard().isOver()){
+        if(!App.getInstance().getBoard().isOver()){
             gameEndedText.setVisible(false);
         }
         else{
@@ -74,19 +74,19 @@ public class BoardPane extends Pane {
         player1PointsText.setFill(Color.RED);
         player2PointsText.setFill(Color.BLUE);
 
-        textField.setPrefSize(100, 25);
+        textField.setPrefSize(150, 25);
         textField.setLayoutX(650);
         textField.setLayoutY(25);
 
         saveGameButton.setDefaultButton(true);
-        saveGameButton.setPrefSize(100, 25);
+        saveGameButton.setPrefSize(150, 25);
         saveGameButton.setLayoutX(650);
         saveGameButton.setLayoutY(75);
         saveGameButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
                 String fileName = textField.getText();
-                if(fileName == null || fileName.equals("(fileName)") || fileName.equals("")){
+                if(!isFileNameValid(fileName)){
                     return;
                 }
                 try {
@@ -98,14 +98,14 @@ public class BoardPane extends Pane {
         });
 
         createDotFileButton.setDefaultButton(true);
-        createDotFileButton.setPrefSize(100, 25);
+        createDotFileButton.setPrefSize(150, 25);
         createDotFileButton.setLayoutX(650);
         createDotFileButton.setLayoutY(125);
         createDotFileButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
                 String fileName = textField.getText();
-                if(fileName == null || fileName.equals("(fileName)")){
+                if(!isFileNameValid(fileName)){
                     return;
                 }
                 try {
@@ -117,13 +117,13 @@ public class BoardPane extends Pane {
         });
 
         undoMoveButton.setDefaultButton(true);
-        undoMoveButton.setPrefSize(100, 25);
+        undoMoveButton.setPrefSize(150, 25);
         undoMoveButton.setLayoutX(650);
         undoMoveButton.setLayoutY(175);
         undoMoveButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                Move lastMoveDone = App.getInstance().getGameBoard().undoLastMove();
+                Move lastMoveDone = App.getInstance().getBoard().undoLastMove();
                 if (lastMoveDone != null) {
                     undoLastMove(lastMoveDone);
                 }
@@ -131,7 +131,7 @@ public class BoardPane extends Pane {
         });
 
         nextTurnButton.setDefaultButton(true);
-        nextTurnButton.setPrefSize(100, 25);
+        nextTurnButton.setPrefSize(150, 25);
         nextTurnButton.setLayoutX(650);
         nextTurnButton.setLayoutY(225);
         nextTurnButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -141,8 +141,8 @@ public class BoardPane extends Pane {
             }
         });
 
-        for (int i = 0; i < App.getInstance().getGameBoard().getSize(); i++) {
-            for (int j = 0; j < App.getInstance().getGameBoard().getSize(); j++) {
+        for (int i = 0; i < App.getInstance().getBoard().getSize(); i++) {
+            for (int j = 0; j < App.getInstance().getBoard().getSize(); j++) {
                 Circle c = new Circle(RADIUS, Color.BLACK);
                 c.relocate(START_POSITION + (i  * DISTANCE), START_POSITION + (j * DISTANCE));
                 getChildren().add(c);
@@ -153,7 +153,7 @@ public class BoardPane extends Pane {
     }
 
     private void refreshBoardStart() {
-        List<Move> lastMoves = App.getInstance().getGameBoard().getAllMoves();
+        List<Move> lastMoves = App.getInstance().getBoard().getAllDoneMoves();
         if(lastMoves == null){
             return;
         }
@@ -163,7 +163,7 @@ public class BoardPane extends Pane {
     }
 
     void refreshBoardMoves() {
-        List<Move> lastMoves = App.getInstance().getGameBoard().getLastMoves();
+        List<Move> lastMoves = App.getInstance().getBoard().getLastDoneMoves();
         if(lastMoves == null){
             return;
         }
@@ -187,7 +187,7 @@ public class BoardPane extends Pane {
     }
 
     private void playNextTurnAI() {
-        if (!App.getInstance().getGameBoard().isOver()) {
+        if (!App.getInstance().getBoard().isOver()) {
             Player actualPlayer = App.getInstance().getCurrentPlayer();
             if (actualPlayer.isAI()) {
                 ((AIPlayer)actualPlayer).calculateAndMakeMove();
@@ -214,31 +214,20 @@ public class BoardPane extends Pane {
             arc.setHeight(LINE_EXTEND);
             arc.setX(START_POSITION + (moveDone.getColFrom() * DISTANCE) + RADIUS * 2);
             arc.setY(START_POSITION + (moveDone.getRowFrom() * DISTANCE) + (RADIUS * 2 - LINE_EXTEND) / 2);
-
         } else {
             arc.setWidth(LINE_EXTEND);
             arc.setHeight(LINE_DISTANCE);
             arc.setX(START_POSITION + (moveDone.getColFrom() * DISTANCE) + (RADIUS * 2 - LINE_EXTEND) / 2);
             arc.setY(START_POSITION + (moveDone.getRowFrom() * DISTANCE) + RADIUS * 2);
-
         }
 
         return arc;
     }
 
-    boolean isCircle(int x, int y) {
-        if (x >= 0 && x <= START_POSITION + DISTANCE * App.getInstance().getGameBoard().getSize() && y >= 0 && y <= START_POSITION + DISTANCE * App.getInstance().getGameBoard().getSize()) {
-            if ((x - START_POSITION) % DISTANCE <= (RADIUS + RADIUS) && (y - START_POSITION) % DISTANCE <= (RADIUS + RADIUS)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     int isArc(int x, int y) {
-        if (x >= 0 && x <= START_POSITION + DISTANCE * App.getInstance().getGameBoard().getSize() && y >= 0 && y <= START_POSITION + DISTANCE * App.getInstance().getGameBoard().getSize()) {
+        if (x >= 0 && x <= START_POSITION + DISTANCE * App.getInstance().getBoard().getSize() && y >= 0 && y <= START_POSITION + DISTANCE * App.getInstance().getBoard().getSize()) {
             int width = RADIUS+RADIUS;
-            int height = width + LINE_DISTANCE;
+            int height = width + RADIUS + LINE_DISTANCE;
             int xPos = (x - START_POSITION) % DISTANCE;
             int yPos = (y - START_POSITION) % DISTANCE;
             if(xPos <= width && yPos >=width && yPos <= height){
@@ -251,4 +240,18 @@ public class BoardPane extends Pane {
         return 0;
     }
 
+    private boolean isFileNameValid(String str){
+        if(str == null){
+            return false;
+        }
+        if(str.isEmpty()){
+            return false;
+        }
+        for(int i = 0; i < str.length(); i++){
+            if(str.charAt(i) == ' '){
+                return false;
+            }
+        }
+        return true;
+    }
 }

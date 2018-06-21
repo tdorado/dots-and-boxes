@@ -34,7 +34,7 @@ public class App extends Application {
             launch(args);
         }
         else{
-            System.exit(0);
+            System.exit(1);
         }
     }
 

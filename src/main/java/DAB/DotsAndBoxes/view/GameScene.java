@@ -13,7 +13,6 @@ import static DAB.DotsAndBoxes.view.BoardPane.START_POSITION;
 public class GameScene extends Scene {
 
     private BoardPane boardPane;
-    private Move lastMoveClicked;
 
     public GameScene(BoardPane boardPane) {
         super(boardPane, 800, 600);
@@ -47,15 +46,16 @@ public class GameScene extends Scene {
         int y = (int) event.getY();
         int arcType = boardPane.isArc(x, y);
         if (arcType != 0) {
+            Move move;
             x = (x - START_POSITION) / DISTANCE;
             y = (y - START_POSITION) / DISTANCE;
             if (arcType == 1) {
-                lastMoveClicked = new Move(y, x, y + 1, x);
+                move = new Move(y, x, y + 1, x);
             } else {
-                lastMoveClicked = new Move(y, x, y, x + 1);
+                move = new Move(y, x, y, x + 1);
             }
             Player currentPlayer = App.getInstance().getCurrentPlayer();
-            currentPlayer.makeMove(lastMoveClicked);
+            currentPlayer.makeMove(move);
             boardPane.refreshBoardMoves();
         }
     }

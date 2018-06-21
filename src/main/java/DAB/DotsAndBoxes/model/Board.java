@@ -7,24 +7,24 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.*;
 
-public class GameBoard implements Serializable {
+public class Board implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private int size;
     private int squares[][];
-    private LinkedList<Move> movesDone;
+    private LinkedList<Move> doneMoves;
     private LinkedHashSet<Move> possibleMoves;
 
-    public GameBoard(int size) {
+    Board(int size) {
         this.size = size;
         this.squares = new int[size - 1][size -1];
-        this.movesDone = new LinkedList<>();
+        this.doneMoves = new LinkedList<>();
         this.possibleMoves = new LinkedHashSet<>();
         initializeGameBoard();
     }
 
-    public LinkedHashSet<Move> getPossibleMoves() {
+    LinkedHashSet<Move> getPossibleMoves() {
         return possibleMoves;
     }
 
@@ -60,10 +60,10 @@ public class GameBoard implements Serializable {
     }
 
     public Move undoLastMove() {
-        if (movesDone.isEmpty())
+        if (doneMoves.isEmpty())
             return null;
 
-        Move move = movesDone.removeLast();
+        Move move = doneMoves.removeLast();
         move.getPlayer().setPoints(move.getPlayer().getPoints() - move.getPointsDone());
         possibleMoves.add(move);
 
@@ -102,16 +102,16 @@ public class GameBoard implements Serializable {
         return move;
     }
 
-    public List<Move> getLastMoves(){
-        if (movesDone.isEmpty())
+    public List<Move> getLastDoneMoves(){
+        if (doneMoves.isEmpty())
             return null;
 
         LinkedList<Move> result = new LinkedList<>();
         boolean stop = false;
-        result.add(movesDone.getLast());
-        for (int i = movesDone.size() - 2; i >= 0 && !stop; i--) {
-            if (movesDone.get(i).getPlayer() == result.getFirst().getPlayer()) {
-                result.add(movesDone.get(i));
+        result.add(doneMoves.getLast());
+        for (int i = doneMoves.size() - 2; i >= 0 && !stop; i--) {
+            if (doneMoves.get(i).getPlayer() == result.getFirst().getPlayer()) {
+                result.add(doneMoves.get(i));
             } else {
                 stop = true;
             }
@@ -119,13 +119,13 @@ public class GameBoard implements Serializable {
         return result;
     }
 
-    public List<Move> getAllMoves(){
-        return movesDone;
+    public List<Move> getAllDoneMoves(){
+        return doneMoves;
     }
 
-    boolean makeMove(Move move) {
+    void makeMove(Move move) {
         if (possibleMoves.contains(move)) {
-            movesDone.addLast(move);
+            doneMoves.addLast(move);
             possibleMoves.remove(move);
 
             int pointsDone = 0;
@@ -187,14 +187,13 @@ public class GameBoard implements Serializable {
                 move.getPlayer().setPoints(move.getPlayer().getPoints() + pointsDone);
             }
         }
-        return false;
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
         out.writeInt(size);
         out.writeObject(squares);
-        out.writeObject(movesDone);
+        out.writeObject(doneMoves);
         out.writeObject(possibleMoves);
     }
 
@@ -202,7 +201,7 @@ public class GameBoard implements Serializable {
         ois.defaultReadObject();
         size = ois.readInt();
         squares = (int[][]) ois.readObject();
-        movesDone = (LinkedList<Move>) ois.readObject();
+        doneMoves = (LinkedList<Move>) ois.readObject();
         possibleMoves = (LinkedHashSet<Move>) ois.readObject();
     }
 }

@@ -9,7 +9,7 @@ public class Game implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private GameBoard gameBoard;
+    private Board board;
     private int aiType;
     private Player player1;
     private Player player2;
@@ -17,7 +17,7 @@ public class Game implements Serializable {
 
     public Game(int size, int aiType, int aiMode, int aiModeParam, boolean prune) {
         this.aiType = aiType;
-        this.gameBoard = new GameBoard(size);
+        this.board = new Board(size);
 
         Random random = new Random();
         this.currentPlayerTurn = random.nextInt(3 - 1) + 1;
@@ -39,10 +39,6 @@ public class Game implements Serializable {
         }
     }
 
-    public int getAiType() {
-        return aiType;
-    }
-
     public Player getPlayer1() {
         return player1;
     }
@@ -51,20 +47,10 @@ public class Game implements Serializable {
         return player2;
     }
 
-    /**
-     * Returns the GameBoard containing information for the visual part.
-     *
-     * @return GameBoard of the Game
-     */
-    public GameBoard getGameBoard() {
-        return gameBoard;
+    public Board getBoard() {
+        return board;
     }
 
-    /**
-     * Returns the Player that has to make a move at the moment of request.
-     *
-     * @return Player
-     */
     public Player getCurrentPlayer() {
         if (currentPlayerTurn == 1) {
             return player1;
@@ -72,29 +58,15 @@ public class Game implements Serializable {
         return player2;
     }
 
-    /**
-     * Returns the Player that does not have to make a move at the moment of request.
-     *
-     * @return Player
-     */
-    public Player getNotCurrentPlayer() {
+    Player getNotCurrentPlayer() {
         if (currentPlayerTurn == 1) {
             return player2;
         }
         return player1;
     }
 
-    /**
-     * Generates .dot file containing the process of the minimax algorithm that the AIPlayer made to chose it's move.
-     *
-     * @param fileName name of the .dot file
-     * @return boolean, true if the file was created correctly and false if not
-     * @throws DotCreationException
-     */
-    public boolean generateDotFile(String fileName) throws DotCreationException {
-        if (aiType == 0) {
-            return false;
-        } else if (aiType == 1) {
+    public void generateDotFile(String fileName) throws DotCreationException {
+        if (aiType == 1) {
             if (!((AIPlayer) player1).makeDotFile(fileName)) {
                 throw new DotCreationException();
             }
@@ -102,23 +74,27 @@ public class Game implements Serializable {
             if (!((AIPlayer) player2).makeDotFile(fileName)) {
                 throw new DotCreationException();
             }
-        } else {
+        } else if (aiType == 3) {
             if (!((AIPlayer) getNotCurrentPlayer()).makeDotFile(fileName)) {
                 throw new DotCreationException();
             }
         }
-        return true;
     }
 
     public void saveGame(String fileName) throws IOException {
-        FileManager.writeToFile(this, fileName);
+        ObjectOutputStream outStream;
+        outStream = new ObjectOutputStream(new FileOutputStream(System.getProperty("user.dir") + "/target/" + fileName + ".game"));
+        outStream.writeObject(this);
+        outStream.close();
     }
 
     public static Game loadGameFromFile(int size, int aiType, int aiMode, int aiModeParam, boolean prune, String fileName) throws IOException, ClassNotFoundException, WrongParametersException {
-        Game game;
-        game = (Game) FileManager.readFromFile(fileName);
+        ObjectInputStream inputStream;
+        inputStream = new ObjectInputStream(new FileInputStream(System.getProperty("user.dir") + "/target/" + fileName + ".game"));
+        Game game = (Game)inputStream.readObject();
+        inputStream.close();
         if (game != null) {
-            if (size != game.gameBoard.getSize()) {
+            if (size != game.board.getSize()) {
                 throw new WrongParametersException();
             }
             if (game.aiType == 0) {
@@ -188,7 +164,7 @@ public class Game implements Serializable {
 
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
-        out.writeObject(gameBoard);
+        out.writeObject(board);
         out.writeInt(aiType);
         out.writeObject(player1);
         out.writeObject(player2);
@@ -197,7 +173,7 @@ public class Game implements Serializable {
 
     private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
         ois.defaultReadObject();
-        gameBoard = (GameBoard) ois.readObject();
+        board = (Board) ois.readObject();
         aiType = ois.readInt();
         player1 = (Player) ois.readObject();
         player2 = (Player) ois.readObject();
