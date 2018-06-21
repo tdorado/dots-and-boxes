@@ -41,6 +41,8 @@ public class Move implements Serializable, Cloneable {
             this.rowTo = rowTo;
             this.colTo = colTo;
         }
+        this.pointsDone = 0;
+        this.player = null;
     }
 
     public int getRowFrom() {
@@ -61,6 +63,10 @@ public class Move implements Serializable, Cloneable {
 
     public int getPointsDone() {
         return pointsDone;
+    }
+
+    public void setPointsDone(int pointsDone){
+        this.pointsDone = pointsDone;
     }
 
     public Player getPlayer() {

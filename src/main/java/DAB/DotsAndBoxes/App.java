@@ -12,6 +12,13 @@ import java.io.IOException;
 public class App extends Application {
     private static Game game;
 
+    public static Game getInstance() throws RuntimeException{
+        if(game == null){
+            throw new RuntimeException();
+        }
+        return game;
+    }
+
     public static void main(String[] args) {
         boolean correct = true;
         try {
@@ -26,11 +33,14 @@ public class App extends Application {
         if(correct){
             launch(args);
         }
+        else{
+            System.exit(0);
+        }
     }
 
     @Override
     public void start(Stage primaryStage) {
-        Scene scene = new GameScene(new BoardPane(game), game);
+        Scene scene = new GameScene(new BoardPane());
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -45,7 +55,7 @@ public class App extends Application {
         if (arguments.length == 4 || arguments.length == 6 || arguments.length == 10 || arguments.length == 12) {
             if (arguments[0].equals("-size")) {
                 size = Integer.parseInt(arguments[1]);
-                if (size < 2 && size > 20) {
+                if (size < 3 || size > 20) {
                     argumentFail = true;
                 }
             } else {
@@ -53,7 +63,7 @@ public class App extends Application {
             }
             if (arguments[2].equals("-ai")) {
                 aiType = Integer.parseInt(arguments[3]);
-                if (aiType < 0 && aiType > 3) {
+                if (aiType < 0 || aiType > 3) {
                     argumentFail = true;
                 }
             } else {

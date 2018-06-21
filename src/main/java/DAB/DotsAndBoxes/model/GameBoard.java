@@ -1,5 +1,6 @@
 package DAB.DotsAndBoxes.model;
 
+import DAB.DotsAndBoxes.App;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -12,25 +13,18 @@ public class GameBoard implements Serializable {
 
     private int size;
     private int squares[][];
-    private HashSet<Move> movesDone;
-    private HashSet<Move> possibleMoves;
-    private Stack<Move> undoStack;
-    private Game game;
+    private LinkedList<Move> movesDone;
+    private LinkedHashSet<Move> possibleMoves;
 
     public GameBoard(int size) {
         this.size = size;
         this.squares = new int[size - 1][size -1];
-        this.movesDone = new HashSet<>();
-        this.possibleMoves = new HashSet<>();
-        this.undoStack = new Stack<>();
+        this.movesDone = new LinkedList<>();
+        this.possibleMoves = new LinkedHashSet<>();
         initializeGameBoard();
     }
 
-    public HashSet<Move> getMovesDone() {
-        return movesDone;
-    }
-
-    public HashSet<Move> getPossibleMoves() {
+    public LinkedHashSet<Move> getPossibleMoves() {
         return possibleMoves;
     }
 
@@ -65,48 +59,134 @@ public class GameBoard implements Serializable {
         possibleMoves.addAll(aux);
     }
 
-    /**
-     * Method that undoes the last move and returns the undone move
-     *
-     * @return MoveDone undone
-     */
     public Move undoLastMove() {
-        if (undoStack.isEmpty())
+        if (movesDone.isEmpty())
             return null;
 
-        Player currentPlayer = game.getCurrentPlayer();
-        Move move = undoStack.pop();
-        if (move.getPlayer() != currentPlayer) {
-            game.changeCurrentPlayerTurn();
+        Move move = movesDone.removeLast();
+        move.getPlayer().setPoints(move.getPlayer().getPoints() - move.getPointsDone());
+        possibleMoves.add(move);
+
+        int x = move.getRowFrom();
+        int y = move.getColFrom();
+
+        if (move.isHorizontal()) {
+            if(x == 0){
+                squares[x][y]++;
+            }
+            else if(x == size - 1){
+                squares[x - 1][y]++;
+            }
+            else{
+                squares[x][y]++;
+                squares[x - 1][y]++;
+            }
+        } else {
+            if(y == 0){
+                squares[x][y]++;
+            }
+            else if(y == size - 1){
+                squares[x][y - 1]++;
+            }
+            else{
+                squares[x][y]++;
+                squares[x][y - 1]++;
+            }
         }
-        undoMove(move);
+
+        Player currentPlayer = App.getInstance().getCurrentPlayer();
+        if (move.getPlayer() != currentPlayer) {
+            App.getInstance().changeCurrentPlayerTurn();
+        }
 
         return move;
     }
 
     public List<Move> getLastMoves(){
-        if (undoStack.isEmpty())
+        if (movesDone.isEmpty())
             return null;
 
         LinkedList<Move> result = new LinkedList<>();
-        result.add(undoStack.peek());
-        boolean flag = false;
-        for (int i = undoStack.size() - 2; i >= 0 && !flag; i--) {
-            if (undoStack.get(i).getPlayer() == result.getFirst().getPlayer()) {
-                result.add(undoStack.get(i));
+        boolean stop = false;
+        result.add(movesDone.getLast());
+        for (int i = movesDone.size() - 2; i >= 0 && !stop; i--) {
+            if (movesDone.get(i).getPlayer() == result.getFirst().getPlayer()) {
+                result.add(movesDone.get(i));
             } else {
-                flag = true;
+                stop = true;
             }
         }
         return result;
     }
 
-    public int undoMove(Move move) {
-        return 0;
+    public List<Move> getAllMoves(){
+        return movesDone;
     }
 
-    public boolean makeMove(Move move) {
+    boolean makeMove(Move move) {
+        if (possibleMoves.contains(move)) {
+            movesDone.addLast(move);
+            possibleMoves.remove(move);
 
+            int pointsDone = 0;
+            int x = move.getRowFrom();
+            int y = move.getColFrom();
+
+            if (move.isHorizontal()) {
+                if(x == 0){
+                    squares[x][y]--;
+                    if(squares[x][y] == 0){
+                        pointsDone++;
+                    }
+                }
+                else if(x == size - 1){
+                    squares[x - 1][y]--;
+                    if(squares[x - 1][y] == 0){
+                        pointsDone++;
+                    }
+                }
+                else{
+                    squares[x][y]--;
+                    if(squares[x][y] == 0){
+                        pointsDone++;
+                    }
+                    squares[x - 1][y]--;
+                    if(squares[x - 1][y] == 0){
+                        pointsDone++;
+                    }
+                }
+            } else {
+                if(y == 0){
+                    squares[x][y]--;
+                    if(squares[x][y] == 0){
+                        pointsDone++;
+                    }
+                }
+                else if(y == size - 1){
+                    squares[x][y -1]--;
+                    if(squares[x][y - 1] == 0){
+                        pointsDone++;
+                    }
+                }
+                else{
+                    squares[x][y]--;
+                    if(squares[x][y] == 0){
+                        pointsDone++;
+                    }
+                    squares[x][y - 1]--;
+                    if(squares[x][y - 1] == 0){
+                        pointsDone++;
+                    }
+                }
+            }
+            if(pointsDone == 0){
+                App.getInstance().changeCurrentPlayerTurn();
+            }
+            else{
+                move.setPointsDone(pointsDone);
+                move.getPlayer().setPoints(move.getPlayer().getPoints() + pointsDone);
+            }
+        }
         return false;
     }
 
@@ -116,15 +196,13 @@ public class GameBoard implements Serializable {
         out.writeObject(squares);
         out.writeObject(movesDone);
         out.writeObject(possibleMoves);
-        out.writeObject(undoStack);
     }
 
     private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
         ois.defaultReadObject();
         size = ois.readInt();
         squares = (int[][]) ois.readObject();
-        movesDone = (HashSet<Move>) ois.readObject();
-        possibleMoves = (HashSet<Move>) ois.readObject();
-        undoStack = (Stack<Move>) ois.readObject();
+        movesDone = (LinkedList<Move>) ois.readObject();
+        possibleMoves = (LinkedHashSet<Move>) ois.readObject();
     }
 }

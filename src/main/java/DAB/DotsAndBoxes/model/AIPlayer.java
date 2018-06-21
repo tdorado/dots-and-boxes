@@ -1,9 +1,8 @@
 package DAB.DotsAndBoxes.model;
 
-import DAB.DotsAndBoxes.model.exceptions.MinimaxException;
-
+import DAB.DotsAndBoxes.App;
 import java.io.*;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
@@ -18,16 +17,16 @@ public class AIPlayer extends Player implements Serializable {
     private boolean prune;
     private transient MoveState lastMoveState;
 
-    AIPlayer(int aiMode, int aiModeParam, boolean prune, int points, Game game) {
-        super(points, game);
+    AIPlayer(int aiMode, int aiModeParam, boolean prune, int points) {
+        super(points);
         this.aiMode = aiMode;
         this.aiModeParam = aiModeParam;
         this.prune = prune;
         this.lastMoveState = null;
     }
 
-    AIPlayer(int aiMode, int aiModeParam, boolean prune, Game game) {
-        this(aiMode, aiModeParam, prune, 0, game);
+    AIPlayer(int aiMode, int aiModeParam, boolean prune) {
+        this(aiMode, aiModeParam, prune, 0);
     }
 
     @Override
@@ -49,10 +48,8 @@ public class AIPlayer extends Player implements Serializable {
 
     /**
      * Method that calculates the move using minimax algorithm with the parameters already saved
-     *
-     * @throws MinimaxException
      */
-    public void calculateAndMakeMove() throws MinimaxException {
+    public void calculateAndMakeMove() {
         LinkedList<Move> moves = minimax();
         for (Move move : moves) {
             this.makeMove(move);
@@ -63,9 +60,8 @@ public class AIPlayer extends Player implements Serializable {
      * Method that gets the moves that the AI has to make
      *
      * @return List of moves to be made by de AIPlayer
-     * @throws MinimaxException
      */
-    private LinkedList<Move> minimax() throws MinimaxException {
+    private LinkedList<Move> minimax() {
         lastMoveState = new MoveState(false);
         if (aiMode == 0) {
             long timeSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
@@ -92,14 +88,14 @@ public class AIPlayer extends Player implements Serializable {
      */
     private int minimaxDepthRec(int movesCount, MoveState previousMoveState, int depth, boolean sameLevel, boolean maxOrMin) {
         if (maxOrMin) {  // MAX
-            if (!game.getGameBoard().getPossibleMoves().isEmpty()) {
+            if (!App.getInstance().getGameBoard().getPossibleMoves().isEmpty()) {
                 if (sameLevel) { // MAX CON VARIOS MOVS
                     boolean firstEntry = true;
-                    HashSet<Move> possibleMoves = (HashSet<Move>) game.getGameBoard().getPossibleMoves().clone();
+                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getGameBoard().getPossibleMoves().clone();
                     for (Move move : possibleMoves) {
                         int auxMovesCount = movesCount;
                         movesCount++;
-                        game.getCurrentPlayer().makeMove(move);
+                        App.getInstance().getCurrentPlayer().makeMove(move);
                         MoveState currentMoveState;
                         if (firstEntry) {
                             currentMoveState = previousMoveState.children.getLast();
@@ -113,7 +109,7 @@ public class AIPlayer extends Player implements Serializable {
                             previousMoveState.children.add(currentMoveState);
                         }
                         currentMoveState.moves.add(move);
-                        if (this == game.getCurrentPlayer()) {
+                        if (this == App.getInstance().getCurrentPlayer()) {
                             minimaxDepthRec(movesCount, previousMoveState, depth, true, true);
                         } else {
                             if (previousMoveState.chosen == null) {
@@ -122,26 +118,26 @@ public class AIPlayer extends Player implements Serializable {
                             if (depth < aiModeParam) {
                                 currentMoveState.value = minimaxDepthRec(0, currentMoveState, depth + 1, false, false);
                             } else {
-                                currentMoveState.value = ((AIPlayer) game.getNotCurrentPlayer()).heuristicValue();
+                                currentMoveState.value = ((AIPlayer) App.getInstance().getNotCurrentPlayer()).heuristicValue();
                             }
                             if (previousMoveState.chosen.value < currentMoveState.value) {
                                 previousMoveState.chosen = currentMoveState;
                             }
                         }
                         while (movesCount > auxMovesCount) {
-                            game.getGameBoard().undoLastMove();
+                            App.getInstance().getGameBoard().undoLastMove();
                             movesCount--;
                         }
                     }
                 } else { // MAX CON UN SOLO MOV
-                    HashSet<Move> possibleMoves = (HashSet<Move>) game.getGameBoard().getPossibleMoves().clone();
+                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getGameBoard().getPossibleMoves().clone();
                     for (Move move : possibleMoves) {
                         movesCount++;
-                        game.getCurrentPlayer().makeMove(move);
+                        App.getInstance().getCurrentPlayer().makeMove(move);
                         MoveState currentMoveState = new MoveState(true);
                         currentMoveState.moves.add(move);
                         previousMoveState.children.add(currentMoveState);
-                        if (this == game.getCurrentPlayer()) {
+                        if (this == App.getInstance().getCurrentPlayer()) {
                             minimaxDepthRec(movesCount, previousMoveState, depth, true, true);
                         } else {
                             if (previousMoveState.chosen == null) {
@@ -150,13 +146,13 @@ public class AIPlayer extends Player implements Serializable {
                             if (depth < aiModeParam) {
                                 currentMoveState.value = minimaxDepthRec(0, currentMoveState, depth + 1, false, false);
                             } else
-                                currentMoveState.value = ((AIPlayer) game.getNotCurrentPlayer()).heuristicValue();
+                                currentMoveState.value = ((AIPlayer) App.getInstance().getNotCurrentPlayer()).heuristicValue();
                             if (previousMoveState.chosen.value < currentMoveState.value) {
                                 previousMoveState.chosen = currentMoveState;
                             }
                         }
                         while (movesCount > 0) {
-                            game.getGameBoard().undoLastMove();
+                            App.getInstance().getGameBoard().undoLastMove();
                             movesCount--;
                         }
                     }
@@ -165,19 +161,19 @@ public class AIPlayer extends Player implements Serializable {
                 MoveState currentMoveState = previousMoveState.children.getLast();
                 if (previousMoveState.chosen == null)
                     previousMoveState.chosen = currentMoveState;
-                currentMoveState.value = ((AIPlayer) game.getCurrentPlayer()).heuristicValue();
+                currentMoveState.value = ((AIPlayer) App.getInstance().getCurrentPlayer()).heuristicValue();
                 if (previousMoveState.chosen.value < currentMoveState.value)
                     previousMoveState.chosen = currentMoveState;
             }
         } else { // MIN
-            if (!game.getGameBoard().getPossibleMoves().isEmpty()) {
+            if (!App.getInstance().getGameBoard().getPossibleMoves().isEmpty()) {
                 if (sameLevel) { //MIN CON VARIOS MOVS
                     boolean firstEntry = true;
-                    HashSet<Move> possibleMoves = (HashSet<Move>) game.getGameBoard().getPossibleMoves().clone();
+                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getGameBoard().getPossibleMoves().clone();
                     for (Move move : possibleMoves) {
                         int auxMovesCount = movesCount;
                         movesCount++;
-                        game.getCurrentPlayer().makeMove(move);
+                        App.getInstance().getCurrentPlayer().makeMove(move);
                         MoveState currentMoveState;
                         if (firstEntry) {
                             currentMoveState = previousMoveState.children.getLast();
@@ -190,14 +186,14 @@ public class AIPlayer extends Player implements Serializable {
                             previousMoveState.children.add(currentMoveState);
                         }
                         currentMoveState.moves.add(move);
-                        if (this != game.getCurrentPlayer()) {
+                        if (this != App.getInstance().getCurrentPlayer()) {
                             minimaxDepthRec(movesCount, previousMoveState, depth, true, false);
                         } else {
                             if (previousMoveState.chosen == null) {
                                 previousMoveState.chosen = currentMoveState;
                             }
                             if (prune) {
-                                currentMoveState.value = ((AIPlayer) game.getCurrentPlayer()).heuristicValue();
+                                currentMoveState.value = ((AIPlayer) App.getInstance().getCurrentPlayer()).heuristicValue();
                                 if (previousMoveState.chosen != currentMoveState && previousMoveState.chosen.value <= currentMoveState.value) {
                                     currentMoveState.pruned = true;
                                 }
@@ -213,7 +209,7 @@ public class AIPlayer extends Player implements Serializable {
                                 if (depth < aiModeParam) {
                                     currentMoveState.value = minimaxDepthRec(0, currentMoveState, depth + 1, false, true);
                                 } else {
-                                    currentMoveState.value = ((AIPlayer) game.getCurrentPlayer()).heuristicValue();
+                                    currentMoveState.value = ((AIPlayer) App.getInstance().getCurrentPlayer()).heuristicValue();
                                 }
                                 if (previousMoveState.chosen.value > currentMoveState.value) {
                                     previousMoveState.chosen = currentMoveState;
@@ -221,26 +217,26 @@ public class AIPlayer extends Player implements Serializable {
                             }
                         }
                         while (movesCount > auxMovesCount) {
-                            game.getGameBoard().undoLastMove();
+                            App.getInstance().getGameBoard().undoLastMove();
                             movesCount--;
                         }
                     }
                 } else { //MIN CON UN SOLO MOV
-                    HashSet<Move> possibleMoves = (HashSet<Move>) game.getGameBoard().getPossibleMoves().clone();
+                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getGameBoard().getPossibleMoves().clone();
                     for (Move move : possibleMoves) {
                         movesCount++;
-                        game.getCurrentPlayer().makeMove(move);
+                        App.getInstance().getCurrentPlayer().makeMove(move);
                         MoveState currentMoveState = new MoveState(false);
                         currentMoveState.moves.add(move);
                         previousMoveState.children.add(currentMoveState);
-                        if (this != game.getCurrentPlayer()) {
+                        if (this != App.getInstance().getCurrentPlayer()) {
                             minimaxDepthRec(movesCount, previousMoveState, depth, true, false);
                         } else {
                             if (previousMoveState.chosen == null) {
                                 previousMoveState.chosen = currentMoveState;
                             }
                             if (prune) {
-                                currentMoveState.value = ((AIPlayer) game.getCurrentPlayer()).heuristicValue();
+                                currentMoveState.value = ((AIPlayer) App.getInstance().getCurrentPlayer()).heuristicValue();
                                 if (previousMoveState.chosen != currentMoveState && previousMoveState.chosen.value <= currentMoveState.value) {
                                     currentMoveState.pruned = true;
                                 }
@@ -255,7 +251,7 @@ public class AIPlayer extends Player implements Serializable {
                                 if (depth < aiModeParam) {
                                     currentMoveState.value = minimaxDepthRec(0, currentMoveState, depth + 1, false, true);
                                 } else {
-                                    currentMoveState.value = ((AIPlayer) game.getCurrentPlayer()).heuristicValue();
+                                    currentMoveState.value = ((AIPlayer) App.getInstance().getCurrentPlayer()).heuristicValue();
                                 }
                                 if (previousMoveState.chosen.value > currentMoveState.value) {
                                     previousMoveState.chosen = currentMoveState;
@@ -263,7 +259,7 @@ public class AIPlayer extends Player implements Serializable {
                             }
                         }
                         while (movesCount > 0) {
-                            game.getGameBoard().undoLastMove();
+                            App.getInstance().getGameBoard().undoLastMove();
                             movesCount--;
                         }
                     }
@@ -272,7 +268,7 @@ public class AIPlayer extends Player implements Serializable {
                 MoveState currentMoveState = previousMoveState.children.getLast();
                 if (previousMoveState.chosen == null)
                     previousMoveState.chosen = currentMoveState;
-                currentMoveState.value = ((AIPlayer) game.getCurrentPlayer()).heuristicValue();
+                currentMoveState.value = ((AIPlayer) App.getInstance().getCurrentPlayer()).heuristicValue();
                 if (previousMoveState.chosen.value > currentMoveState.value)
                     previousMoveState.chosen = currentMoveState;
             }
@@ -292,15 +288,15 @@ public class AIPlayer extends Player implements Serializable {
      */
     private int minimaxTimeRec(int movesCount, MoveState previousMoveState, boolean sameLevel, boolean maxOrMin, long secondsMax) {
         if (maxOrMin) {  // MAX
-            if (!game.getGameBoard().getPossibleMoves().isEmpty()) {
+            if (!App.getInstance().getGameBoard().getPossibleMoves().isEmpty()) {
                 if (sameLevel) { // MAX CON VARIOS MOVS
                     boolean firstEntry = true;
-                    HashSet<Move> possibleMoves = (HashSet<Move>) game.getGameBoard().getPossibleMoves().clone();
+                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getGameBoard().getPossibleMoves().clone();
                     for (Move move : possibleMoves) {
                         boolean timeFlag = false;
                         int auxMovesCount = movesCount;
                         movesCount++;
-                        game.getCurrentPlayer().makeMove(move);
+                        App.getInstance().getCurrentPlayer().makeMove(move);
                         MoveState currentMoveState;
                         if (firstEntry) {
                             currentMoveState = previousMoveState.children.getLast();
@@ -314,7 +310,7 @@ public class AIPlayer extends Player implements Serializable {
                             previousMoveState.children.add(currentMoveState);
                         }
                         currentMoveState.moves.add(move);
-                        if (this == game.getCurrentPlayer()) {
+                        if (this == App.getInstance().getCurrentPlayer()) {
                             minimaxTimeRec(movesCount, previousMoveState, true, true, secondsMax);
                         } else {
                             if (previousMoveState.chosen == null) {
@@ -326,14 +322,14 @@ public class AIPlayer extends Player implements Serializable {
                                 currentMoveState.value = minimaxTimeRec(0, currentMoveState, false, false, secondsMax);
                             } else {
                                 timeFlag = true;
-                                currentMoveState.value = ((AIPlayer) game.getNotCurrentPlayer()).heuristicValue();
+                                currentMoveState.value = ((AIPlayer) App.getInstance().getNotCurrentPlayer()).heuristicValue();
                             }
                             if (previousMoveState.chosen.value < currentMoveState.value) {
                                 previousMoveState.chosen = currentMoveState;
                             }
                         }
                         while (movesCount > auxMovesCount) {
-                            game.getGameBoard().undoLastMove();
+                            App.getInstance().getGameBoard().undoLastMove();
                             movesCount--;
                         }
                         if (timeFlag) {
@@ -341,15 +337,15 @@ public class AIPlayer extends Player implements Serializable {
                         }
                     }
                 } else { // MAX CON UN SOLO MOV
-                    HashSet<Move> possibleMoves = (HashSet<Move>) game.getGameBoard().getPossibleMoves().clone();
+                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getGameBoard().getPossibleMoves().clone();
                     for (Move move : possibleMoves) {
                         boolean timeFlag = false;
                         movesCount++;
-                        game.getCurrentPlayer().makeMove(move);
+                        App.getInstance().getCurrentPlayer().makeMove(move);
                         MoveState currentMoveState = new MoveState(true);
                         currentMoveState.moves.add(move);
                         previousMoveState.children.add(currentMoveState);
-                        if (this == game.getCurrentPlayer()) {
+                        if (this == App.getInstance().getCurrentPlayer()) {
                             minimaxTimeRec(movesCount, previousMoveState, true, true, secondsMax);
                         } else {
                             if (previousMoveState.chosen == null) {
@@ -360,14 +356,14 @@ public class AIPlayer extends Player implements Serializable {
                                 currentMoveState.value = minimaxTimeRec(0, currentMoveState, false, false, secondsMax);
                             } else {
                                 timeFlag = true;
-                                currentMoveState.value = ((AIPlayer) game.getNotCurrentPlayer()).heuristicValue();
+                                currentMoveState.value = ((AIPlayer) App.getInstance().getNotCurrentPlayer()).heuristicValue();
                             }
                             if (previousMoveState.chosen.value < currentMoveState.value) {
                                 previousMoveState.chosen = currentMoveState;
                             }
                         }
                         while (movesCount > 0) {
-                            game.getGameBoard().undoLastMove();
+                            App.getInstance().getGameBoard().undoLastMove();
                             movesCount--;
                         }
                         if (timeFlag) {
@@ -379,20 +375,20 @@ public class AIPlayer extends Player implements Serializable {
                 MoveState currentMoveState = previousMoveState.children.getLast();
                 if (previousMoveState.chosen == null)
                     previousMoveState.chosen = currentMoveState;
-                currentMoveState.value = ((AIPlayer) game.getCurrentPlayer()).heuristicValue();
+                currentMoveState.value = ((AIPlayer) App.getInstance().getCurrentPlayer()).heuristicValue();
                 if (previousMoveState.chosen.value < currentMoveState.value)
                     previousMoveState.chosen = currentMoveState;
             }
         } else { // MIN
-            if (!game.getGameBoard().getPossibleMoves().isEmpty()) {
+            if (!App.getInstance().getGameBoard().getPossibleMoves().isEmpty()) {
                 if (sameLevel) { //MIN CON VARIOS MOVS
                     boolean firstEntry = true;
-                    HashSet<Move> possibleMoves = (HashSet<Move>) game.getGameBoard().getPossibleMoves().clone();
+                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getGameBoard().getPossibleMoves().clone();
                     for (Move move : possibleMoves) {
                         boolean timeFlag = false;
                         int auxMovesCount = movesCount;
                         movesCount++;
-                        game.getCurrentPlayer().makeMove(move);
+                        App.getInstance().getCurrentPlayer().makeMove(move);
                         MoveState currentMoveState;
                         if (firstEntry) {
                             currentMoveState = previousMoveState.children.getLast();
@@ -405,14 +401,14 @@ public class AIPlayer extends Player implements Serializable {
                             previousMoveState.children.add(currentMoveState);
                         }
                         currentMoveState.moves.add(move);
-                        if (this != game.getCurrentPlayer()) {
+                        if (this != App.getInstance().getCurrentPlayer()) {
                             minimaxTimeRec(movesCount, previousMoveState, true, false, secondsMax);
                         } else {
                             if (previousMoveState.chosen == null) {
                                 previousMoveState.chosen = currentMoveState;
                             }
                             if (prune) {
-                                currentMoveState.value = ((AIPlayer) game.getCurrentPlayer()).heuristicValue();
+                                currentMoveState.value = ((AIPlayer) App.getInstance().getCurrentPlayer()).heuristicValue();
                                 if (previousMoveState.chosen != currentMoveState && previousMoveState.chosen.value <= currentMoveState.value) {
                                     currentMoveState.pruned = true;
                                 }
@@ -433,7 +429,7 @@ public class AIPlayer extends Player implements Serializable {
                                     currentMoveState.value = minimaxTimeRec(0, currentMoveState, false, true, secondsMax);
                                 } else {
                                     timeFlag = true;
-                                    currentMoveState.value = ((AIPlayer) game.getCurrentPlayer()).heuristicValue();
+                                    currentMoveState.value = ((AIPlayer) App.getInstance().getCurrentPlayer()).heuristicValue();
                                 }
                                 if (previousMoveState.chosen.value > currentMoveState.value) {
                                     previousMoveState.chosen = currentMoveState;
@@ -441,7 +437,7 @@ public class AIPlayer extends Player implements Serializable {
                             }
                         }
                         while (movesCount > auxMovesCount) {
-                            game.getGameBoard().undoLastMove();
+                            App.getInstance().getGameBoard().undoLastMove();
                             movesCount--;
                         }
                         if (timeFlag) {
@@ -449,22 +445,22 @@ public class AIPlayer extends Player implements Serializable {
                         }
                     }
                 } else { //MIN CON UN SOLO MOV
-                    HashSet<Move> possibleMoves = (HashSet<Move>) game.getGameBoard().getPossibleMoves().clone();
+                    LinkedHashSet<Move> possibleMoves = (LinkedHashSet<Move>) App.getInstance().getGameBoard().getPossibleMoves().clone();
                     for (Move move : possibleMoves) {
                         boolean timeFlag = false;
                         movesCount++;
-                        game.getCurrentPlayer().makeMove(move);
+                        App.getInstance().getCurrentPlayer().makeMove(move);
                         MoveState currentMoveState = new MoveState(false);
                         currentMoveState.moves.add(move);
                         previousMoveState.children.add(currentMoveState);
-                        if (this != game.getCurrentPlayer()) {
+                        if (this != App.getInstance().getCurrentPlayer()) {
                             minimaxTimeRec(movesCount, previousMoveState, true, false, secondsMax);
                         } else {
                             if (previousMoveState.chosen == null) {
                                 previousMoveState.chosen = currentMoveState;
                             }
                             if (prune) {
-                                currentMoveState.value = ((AIPlayer) game.getCurrentPlayer()).heuristicValue();
+                                currentMoveState.value = ((AIPlayer) App.getInstance().getCurrentPlayer()).heuristicValue();
                                 if (previousMoveState.chosen != currentMoveState && previousMoveState.chosen.value <= currentMoveState.value) {
                                     currentMoveState.pruned = true;
                                 }
@@ -482,7 +478,7 @@ public class AIPlayer extends Player implements Serializable {
                                     currentMoveState.value = minimaxTimeRec(0, currentMoveState, false, true, secondsMax);
                                 } else {
                                     timeFlag = true;
-                                    currentMoveState.value = ((AIPlayer) game.getCurrentPlayer()).heuristicValue();
+                                    currentMoveState.value = ((AIPlayer) App.getInstance().getCurrentPlayer()).heuristicValue();
                                 }
                                 if (previousMoveState.chosen.value > currentMoveState.value) {
                                     previousMoveState.chosen = currentMoveState;
@@ -490,7 +486,7 @@ public class AIPlayer extends Player implements Serializable {
                             }
                         }
                         while (movesCount > 0) {
-                            game.getGameBoard().undoLastMove();
+                            App.getInstance().getGameBoard().undoLastMove();
                             movesCount--;
                         }
                         if (timeFlag) {
@@ -502,7 +498,7 @@ public class AIPlayer extends Player implements Serializable {
                 MoveState currentMoveState = previousMoveState.children.getLast();
                 if (previousMoveState.chosen == null)
                     previousMoveState.chosen = currentMoveState;
-                currentMoveState.value = ((AIPlayer) game.getCurrentPlayer()).heuristicValue();
+                currentMoveState.value = ((AIPlayer) App.getInstance().getCurrentPlayer()).heuristicValue();
                 if (previousMoveState.chosen.value > currentMoveState.value)
                     previousMoveState.chosen = currentMoveState;
             }
@@ -516,7 +512,7 @@ public class AIPlayer extends Player implements Serializable {
      * @return int heuristic value
      */
     private int heuristicValue() {
-        if (game.getGameBoard().isOver()) {
+        if (App.getInstance().getGameBoard().isOver()) {
             if (getOtherPlayer().getPoints() > points) {
                 return beta;
             } else if (getOtherPlayer().getPoints() < points) {
@@ -534,10 +530,10 @@ public class AIPlayer extends Player implements Serializable {
      * @return Player
      */
     private Player getOtherPlayer() {
-        if (game.getCurrentPlayer() == this) {
-            return game.getNotCurrentPlayer();
+        if (App.getInstance().getCurrentPlayer() == this) {
+            return App.getInstance().getNotCurrentPlayer();
         }
-        return game.getCurrentPlayer();
+        return App.getInstance().getCurrentPlayer();
     }
 
     /**
@@ -625,7 +621,7 @@ public class AIPlayer extends Player implements Serializable {
     }
 
     /**
-     * Class used to save all the recurrences of the minimax search
+     * Class used to save all the recurrences of the minimax search, used to create dot file
      */
     private class MoveState {
         private LinkedList<Move> moves;
@@ -659,7 +655,6 @@ public class AIPlayer extends Player implements Serializable {
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
         out.writeInt(points);
-        out.writeObject(game);
         out.writeInt(aiMode);
         out.writeInt(aiModeParam);
         out.writeBoolean(prune);
@@ -668,7 +663,6 @@ public class AIPlayer extends Player implements Serializable {
     private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
         ois.defaultReadObject();
         points = ois.readInt();
-        game = (Game) ois.readObject();
         aiMode = ois.readInt();
         aiModeParam = ois.readInt();
         prune = ois.readBoolean();

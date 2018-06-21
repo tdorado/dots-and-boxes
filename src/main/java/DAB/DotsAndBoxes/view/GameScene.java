@@ -1,79 +1,63 @@
 package DAB.DotsAndBoxes.view;
 
-import DAB.DotsAndBoxes.model.Game;
+import DAB.DotsAndBoxes.App;
+import DAB.DotsAndBoxes.model.AIPlayer;
 import DAB.DotsAndBoxes.model.Move;
 import DAB.DotsAndBoxes.model.Player;
-import DAB.DotsAndBoxes.model.exceptions.InvalidMoveException;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.input.MouseEvent;
+import static DAB.DotsAndBoxes.view.BoardPane.DISTANCE;
+import static DAB.DotsAndBoxes.view.BoardPane.START_POSITION;
 
 public class GameScene extends Scene {
-    private Game game;
-    private BoardPane boardPane;
-    private Coordinates cord1 = new Coordinates(0, 0);
-    private Coordinates cord2 = new Coordinates(0, 0);
-    private int cont = 0;
-    private Move lastMoveClicked = null;
 
-    public GameScene(BoardPane boardPane, Game game) {
+    private BoardPane boardPane;
+    private Move lastMoveClicked;
+
+    public GameScene(BoardPane boardPane) {
         super(boardPane, 800, 600);
         this.boardPane = boardPane;
-        this.game = game;
+        initializeScene();
+    }
 
-        this.setOnMouseClicked(new EventHandler<MouseEvent>() {
+    private void initializeScene() {
+        setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
-                int x = (int) event.getX();
-                int y = (int) event.getY();
-                if (boardPane.isCircle(x, y)) {
-                    if (cont == 0) {
-                        cord1.x = y / 30;
-                        cord1.y = x / 30;
-                        cont = 1;
-                        boardPane.getFirstClick().setVisible(true);
-                        boardPane.getInvalidMoveText().setVisible(false);
-                    } else if (cont == 1) {
-                        cord2.x = y / 30;
-                        cord2.y = x / 30;
-                        cont = 2;
-                        boardPane.getSecondClick().setVisible(true);
-                        lastMoveClicked = new Move(cord1.x, cord1.y, cord2.x, cord2.y);
-                        playNextTurnPlayer();
+                Player currentPlayer = App.getInstance().getCurrentPlayer();
+                if(!currentPlayer.isAI()){
+                    playTurnPlayer(event);
+                    currentPlayer = App.getInstance().getCurrentPlayer();
+                    if(currentPlayer.isAI()) {
+                        ((AIPlayer) currentPlayer).calculateAndMakeMove();
+                        boardPane.refreshBoardMoves();
                     }
+                }
+                else{
+                    ((AIPlayer) currentPlayer).calculateAndMakeMove();
+                    boardPane.refreshBoardMoves();
                 }
             }
         });
-
     }
 
-    private void playNextTurnPlayer() {
-        if (!game.getGameBoard().isOver()) {
-            Player actualPlayer = game.getCurrentPlayer();
-            if (!actualPlayer.isAI()){
-                try {
-                    actualPlayer.makePlayerMove(lastMoveClicked);
-                } catch (InvalidMoveException ex) {
-                    boardPane.getInvalidMoveText().setVisible(true);
-                    System.out.println(ex);
-                }
-                boardPane.getFirstClick().setVisible(false);
-                boardPane.getSecondClick().setVisible(false);
-                lastMoveClicked = null;
-                cont = 0;
-                boardPane.refreshBoard();
+    private void playTurnPlayer(MouseEvent event) {
+        int x = (int) event.getX();
+        int y = (int) event.getY();
+        int arcType = boardPane.isArc(x, y);
+        if (arcType != 0) {
+            x = (x - START_POSITION) / DISTANCE;
+            y = (y - START_POSITION) / DISTANCE;
+            if (arcType == 1) {
+                lastMoveClicked = new Move(y, x, y + 1, x);
+            } else {
+                lastMoveClicked = new Move(y, x, y, x + 1);
             }
+            Player currentPlayer = App.getInstance().getCurrentPlayer();
+            currentPlayer.makeMove(lastMoveClicked);
+            boardPane.refreshBoardMoves();
         }
     }
 
-
-    private class Coordinates {
-        private int x;
-        private int y;
-
-        Coordinates(int x, int y) {
-            this.x = x;
-            this.y = y;
-        }
-    }
 }

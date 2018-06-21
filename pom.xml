@@ -42,5 +42,6 @@
 				</configuration>
 			</plugin>
 		</plugins>
+		<finalName>dots-and-boxes</finalName>
 	</build>
 </project>

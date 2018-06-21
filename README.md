@@ -17,24 +17,21 @@ $ mvn clean install
 
 This should have generated a `.jar` file under `./target/` folder.
 
-4. Execute `.jar` by running:
+4. Execute `.jar` by running one of the following:
 
 ```
-$ java -jar java -jar target/Timbiriche-0.0.1-SNAPSHOT.jar
+$ java -jar java -jar target/dots-and-boxes.jar -size [n] -ai [m] -mode [time|depth] -param [k] -prune [on|off]
 ```
-And the following commands:
+or
 ```
- -size SIZE -ai TYPE -mode MODE -param PARAM -prune PRUNE
-```
-With the optional command to load from a file:
-```
--load FILENAME
+$ java -jar java -jar target/dots-and-boxes.jar -size [n] -ai [m] -mode [time|depth] -param [k] -prune [on|off] -load [file]
 ```
 
-The values of the arguments are:
+##The values of the arguments are:
 
-* SIZE the size of the board, between 3 and 20
-* TYPE that can be 0 for Player vs Player, 1 for AI vs Player, 2 for Player vs AI or 3 for AI vs AI
-* MODE that is the type of minimax, it can be ´depth´ or ´time´
-* PARAM is the parameter of the mode
-* PRUNE can be ´on´ or ´off´ to activate or deactivate prune on the minimax
+* -size [n]: it's the size of the board.
+* -ai [m]: it's the rol of the ai: 0 HUMAN vs HUMAN, 1 AI vs HUMAN, 2 HUMAN vs AI, 3 AI vs AI.
+* -mode [time|depth]: it's the mode of the mimimax algorithm, by time or depth.
+* -param [k]: it's the number of the last argument. When "time" it's seconds. When “depth” it's the depth of the minimax tree.
+* -prune [on|off]: turns on or off the prune of the minimax tree.
+* -load [file]: loads a saved game from file.
