@@ -1,6 +1,5 @@
 package DAB.DotsAndBoxes.model;
 
-import DAB.DotsAndBoxes.App;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -11,12 +10,14 @@ public class Board implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    private Game game;
     private int size;
     private int squares[][];
     private LinkedList<Move> doneMoves;
     private LinkedHashSet<Move> possibleMoves;
 
-    Board(int size) {
+    Board(Game game, int size) {
+        this.game = game;
         this.size = size;
         this.squares = new int[size - 1][size -1];
         this.doneMoves = new LinkedList<>();
@@ -94,9 +95,9 @@ public class Board implements Serializable {
             }
         }
 
-        Player currentPlayer = App.getInstance().getCurrentPlayer();
+        Player currentPlayer = game.getCurrentPlayer();
         if (move.getPlayer() != currentPlayer) {
-            App.getInstance().changeCurrentPlayerTurn();
+            game.changeCurrentPlayerTurn();
         }
 
         return move;
@@ -180,7 +181,7 @@ public class Board implements Serializable {
                 }
             }
             if(pointsDone == 0){
-                App.getInstance().changeCurrentPlayerTurn();
+                game.changeCurrentPlayerTurn();
             }
             else{
                 move.setPointsDone(pointsDone);
@@ -191,6 +192,7 @@ public class Board implements Serializable {
 
     private void writeObject(ObjectOutputStream out) throws IOException {
         out.defaultWriteObject();
+        out.writeObject(game);
         out.writeInt(size);
         out.writeObject(squares);
         out.writeObject(doneMoves);
@@ -199,9 +201,22 @@ public class Board implements Serializable {
 
     private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
         ois.defaultReadObject();
+        game = (Game) ois.readObject();
         size = ois.readInt();
         squares = (int[][]) ois.readObject();
         doneMoves = (LinkedList<Move>) ois.readObject();
         possibleMoves = (LinkedHashSet<Move>) ois.readObject();
+    }
+
+    public int[][] getSquares() {
+        return squares;
+    }
+
+    public void setSquares(int[][] squares) {
+        this.squares = squares;
+    }
+
+    public void setPossibleMoves(LinkedHashSet<Move> possibleMoves) {
+        this.possibleMoves = possibleMoves;
     }
 }

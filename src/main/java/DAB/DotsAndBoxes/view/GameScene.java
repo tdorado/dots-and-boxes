@@ -24,18 +24,19 @@ public class GameScene extends Scene {
         setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
-                Player currentPlayer = App.getInstance().getCurrentPlayer();
-                if(!currentPlayer.isAI()){
-                    playTurnPlayer(event);
-                    currentPlayer = App.getInstance().getCurrentPlayer();
-                    if(currentPlayer.isAI()) {
+                if(!App.getInstance().getBoard().isOver()) {
+                    Player currentPlayer = App.getInstance().getCurrentPlayer();
+                    if (!currentPlayer.isAI()) {
+                        playTurnPlayer(event);
+                        currentPlayer = App.getInstance().getCurrentPlayer();
+                        if (currentPlayer.isAI()) {
+                            ((AIPlayer) currentPlayer).calculateAndMakeMove();
+                            boardPane.refreshBoardMoves();
+                        }
+                    } else {
                         ((AIPlayer) currentPlayer).calculateAndMakeMove();
                         boardPane.refreshBoardMoves();
                     }
-                }
-                else{
-                    ((AIPlayer) currentPlayer).calculateAndMakeMove();
-                    boardPane.refreshBoardMoves();
                 }
             }
         });

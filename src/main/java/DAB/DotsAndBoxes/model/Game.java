@@ -3,6 +3,7 @@ package DAB.DotsAndBoxes.model;
 import DAB.DotsAndBoxes.model.exceptions.DotCreationException;
 import DAB.DotsAndBoxes.model.exceptions.WrongParametersException;
 import java.io.*;
+import java.util.LinkedHashSet;
 import java.util.Random;
 
 public class Game implements Serializable {
@@ -17,25 +18,25 @@ public class Game implements Serializable {
 
     public Game(int size, int aiType, int aiMode, int aiModeParam, boolean prune) {
         this.aiType = aiType;
-        this.board = new Board(size);
+        this.board = new Board(this, size);
 
         Random random = new Random();
         this.currentPlayerTurn = random.nextInt(3 - 1) + 1;
 
         if (aiType == 0) {
-            this.player1 = new Player();
-            this.player2 = new Player();
+            this.player1 = new Player(this);
+            this.player2 = new Player(this);
         } else if (aiType == 1) {
             this.currentPlayerTurn = 1;
-            this.player1 = new AIPlayer(aiMode, aiModeParam, prune);
-            this.player2 = new Player();
+            this.player1 = new AIPlayer(this, aiMode, aiModeParam, prune);
+            this.player2 = new Player(this);
         } else if (aiType == 2) {
             this.currentPlayerTurn = 1;
-            this.player1 = new Player();
-            this.player2 = new AIPlayer(aiMode, aiModeParam, prune);
+            this.player1 = new Player(this);
+            this.player2 = new AIPlayer(this, aiMode, aiModeParam, prune);
         } else {
-            this.player1 = new AIPlayer(aiMode, aiModeParam, prune);
-            this.player2 = new AIPlayer(aiMode, aiModeParam, prune);
+            this.player1 = new AIPlayer(this, aiMode, aiModeParam, prune);
+            this.player2 = new AIPlayer(this, aiMode, aiModeParam, prune);
         }
     }
 
@@ -81,6 +82,20 @@ public class Game implements Serializable {
         }
     }
 
+    Game deepClone(){
+        Game result = new Game(board.getSize(), aiType, 0, 0, false);
+        result.board.setSquares(board.getSquares().clone());
+        result.board.setPossibleMoves(new LinkedHashSet<>(board.getPossibleMoves()));
+        result.setCurrentPlayerTurn(currentPlayerTurn);
+        result.player1 = new Player(result, player1.getPoints());
+        result.player2 = new Player(result, player2.getPoints());
+        return result;
+    }
+
+    private void setCurrentPlayerTurn(int currentPlayerTurn) {
+        this.currentPlayerTurn = currentPlayerTurn;
+    }
+
     public void saveGame(String fileName) throws IOException {
         ObjectOutputStream outStream;
         outStream = new ObjectOutputStream(new FileOutputStream(System.getProperty("user.dir") + "/target/" + fileName + ".game"));
@@ -99,47 +114,47 @@ public class Game implements Serializable {
             }
             if (game.aiType == 0) {
                 if (aiType == 1) {
-                    game.player1 = new AIPlayer(aiMode, aiModeParam, prune, game.player1.getPoints());
+                    game.player1 = new AIPlayer(game, aiMode, aiModeParam, prune, game.player1.getPoints());
                 } else if (aiType == 2) {
-                    game.player2 = new AIPlayer(aiMode, aiModeParam, prune, game.player2.getPoints());
+                    game.player2 = new AIPlayer(game, aiMode, aiModeParam, prune, game.player2.getPoints());
                 } else if (aiType == 3) {
-                    game.player1 = new AIPlayer(aiMode, aiModeParam, prune, game.player1.getPoints());
-                    game.player2 = new AIPlayer(aiMode, aiModeParam, prune, game.player2.getPoints());
+                    game.player1 = new AIPlayer(game, aiMode, aiModeParam, prune, game.player1.getPoints());
+                    game.player2 = new AIPlayer(game, aiMode, aiModeParam, prune, game.player2.getPoints());
                 }
             } else if (game.aiType == 1) {
                 if (aiType == 0) {
-                    game.player1 = new Player(game.player1.getPoints());
+                    game.player1 = new Player(game, game.player1.getPoints());
                 } else if (aiType == 1) {
                     ((AIPlayer) game.player1).setAiMode(aiMode);
                     ((AIPlayer) game.player1).setAiModeParam(aiModeParam);
                     ((AIPlayer) game.player1).setPrune(prune);
                 } else if (aiType == 2) {
-                    game.player1 = new Player(game.player1.getPoints());
-                    game.player2 = new AIPlayer(aiMode, aiModeParam, prune, game.player2.getPoints());
+                    game.player1 = new Player(game, game.player1.getPoints());
+                    game.player2 = new AIPlayer(game, aiMode, aiModeParam, prune, game.player2.getPoints());
                 } else if (aiType == 3) {
-                    game.player2 = new AIPlayer(aiMode, aiModeParam, prune, game.player2.getPoints());
+                    game.player2 = new AIPlayer(game, aiMode, aiModeParam, prune, game.player2.getPoints());
                 }
             } else if (game.aiType == 2) {
                 if (aiType == 0) {
-                    game.player2 = new Player(game.player2.getPoints());
+                    game.player2 = new Player(game, game.player2.getPoints());
                 } else if (aiType == 1) {
-                    game.player1 = new AIPlayer(aiMode, aiModeParam, prune, game.player1.getPoints());
-                    game.player2 = new Player(game.player2.getPoints());
+                    game.player1 = new AIPlayer(game, aiMode, aiModeParam, prune, game.player1.getPoints());
+                    game.player2 = new Player(game, game.player2.getPoints());
                 } else if (aiType == 2) {
                     ((AIPlayer) game.player2).setAiMode(aiMode);
                     ((AIPlayer) game.player2).setAiModeParam(aiModeParam);
                     ((AIPlayer) game.player2).setPrune(prune);
                 } else if (aiType == 3) {
-                    game.player1 = new AIPlayer(aiMode, aiModeParam, prune, game.player1.getPoints());
+                    game.player1 = new AIPlayer(game, aiMode, aiModeParam, prune, game.player1.getPoints());
                 }
             } else if (game.aiType == 3) {
                 if (aiType == 0) {
-                    game.player1 = new Player(game.player1.getPoints());
-                    game.player2 = new Player(game.player2.getPoints());
+                    game.player1 = new Player(game, game.player1.getPoints());
+                    game.player2 = new Player(game, game.player2.getPoints());
                 } else if (aiType == 1) {
-                    game.player2 = new Player(game.player2.getPoints());
+                    game.player2 = new Player(game, game.player2.getPoints());
                 } else if (aiType == 2) {
-                    game.player1 = new Player(game.player1.getPoints());
+                    game.player1 = new Player(game, game.player1.getPoints());
                 } else if (aiType == 3) {
                     ((AIPlayer) game.player1).setAiMode(aiMode);
                     ((AIPlayer) game.player1).setAiModeParam(aiModeParam);

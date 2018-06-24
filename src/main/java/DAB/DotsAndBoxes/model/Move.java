@@ -72,6 +72,10 @@ public class Move implements Serializable, Cloneable {
         return Objects.hash(rowFrom, colFrom, rowTo, colTo);
     }
 
+    public Move clone() throws CloneNotSupportedException {
+        return (Move) super.clone();
+    }
+
     @Override
     public String toString() {
         return "(" + rowFrom + ", " + colFrom + ")( " + rowTo + ", " + colTo + ')';
