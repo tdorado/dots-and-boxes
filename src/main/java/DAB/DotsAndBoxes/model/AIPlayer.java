@@ -68,101 +68,102 @@ public class AIPlayer extends Player implements Serializable {
      */
     private LinkedList<Move> minimax() {
         lastMoveState = new MoveState(false);
-        lastMoveState.gamePhase = game.deepClone();
         if (aiMode == 0) {
+            lastMoveState.gamePhase = game.deepClone();
             maxTime = System.currentTimeMillis() + aiModeParam;
             minimaxTimeRec(lastMoveState);
+            refreshBestMove(lastMoveState);
         } else {
-            minimaxDepthRec(lastMoveState, 0, (int)aiModeParam, true);
+            minimaxDepthRec(lastMoveState, 0, (int)aiModeParam, new LinkedHashSet<>(game.getBoard().getPossibleMoves()));
         }
         System.out.println(lastMoveState.chosenChild);
         return lastMoveState.chosenChild.moves;
     }
 
-    private int minimaxDepthRec(MoveState previousMoveState, int depth, int maxDepth, boolean maxOrMin) {
-        Game game = previousMoveState.gamePhase;
-        Iterator<Move> iterator = ((LinkedHashSet<Move>) game.getBoard().getPossibleMoves().clone()).iterator();
-        Player player;
-        if (maxOrMin) {
-            player = game.getCurrentPlayer();
-            while(iterator.hasNext() && canKeepGoing()) {
-                Player maxPlayer = game.getCurrentPlayer();
-                Move move = iterator.next();
+    private void minimaxDepthRec(MoveState previousMoveState, int depth, int maxDepth, LinkedHashSet<Move> possibleMoves) {
+        Player player = game.getCurrentPlayer();
+        if (!previousMoveState.isMax) {
+            for(Move move : possibleMoves){
                 game.getCurrentPlayer().makeMove(move);
                 MoveState currentMoveState = new MoveState(true);
                 currentMoveState.moves.add(move);
                 previousMoveState.children.add(currentMoveState);
-                if (maxPlayer == game.getCurrentPlayer() && !game.getBoard().isOver()) {
-                    minimaxDepthMultipleMovesRec(previousMoveState, depth, maxDepth, true);
+                if (player == game.getCurrentPlayer() && !game.getBoard().isOver()) {
+                    LinkedHashSet<Move> nextPossibleMoves = new LinkedHashSet<>(possibleMoves);
+                    nextPossibleMoves.remove(move);
+                    minimaxDepthMultipleMovesRec(previousMoveState, depth, maxDepth, nextPossibleMoves);
                 } else {
-                    currentMoveState.gamePhase = game.deepClone();
-                    currentMoveState.value = maxPlayer.heuristicValue();
+                    currentMoveState.value = heuristicValue();
                     if (previousMoveState.chosenChild == null) {
+                        previousMoveState.value = currentMoveState.value;
                         previousMoveState.chosenChild = currentMoveState;
                     }
-                    if (depth < maxDepth && canKeepGoing() && !game.getBoard().isOver()) {
-                        currentMoveState.value = minimaxDepthRec(currentMoveState, depth + 1, maxDepth, false);
+                    if (depth < maxDepth && !game.getBoard().isOver()) {
+                        LinkedHashSet<Move> nextPossibleMoves = new LinkedHashSet<>(possibleMoves);
+                        nextPossibleMoves.removeAll(currentMoveState.moves);
+                        minimaxDepthRec(currentMoveState, depth + 1, maxDepth, nextPossibleMoves);
                     }
-                    if (previousMoveState.chosenChild.value < currentMoveState.value)
+                    if (previousMoveState.chosenChild.value < currentMoveState.value) {
                         previousMoveState.chosenChild = currentMoveState;
+                        previousMoveState.value = currentMoveState.value;
+                    }
                 }
                 game.getBoard().undoLastMove();
             }
         }
         else {
-            player = game.getCurrentPlayer();
-            while(iterator.hasNext() && canKeepGoing()) {
-                Player minPlayer = game.getCurrentPlayer();
-                Move move = iterator.next();
+            for(Move move : possibleMoves){
                 game.getCurrentPlayer().makeMove(move);
                 MoveState currentMoveState = new MoveState(false);
                 currentMoveState.moves.add(move);
                 previousMoveState.children.add(currentMoveState);
-                if (minPlayer == game.getCurrentPlayer() && !game.getBoard().isOver()) {
-                    minimaxDepthMultipleMovesRec(previousMoveState, depth, maxDepth, false);
+                if (player == game.getCurrentPlayer() && !game.getBoard().isOver()) {
+                    LinkedHashSet<Move> nextPossibleMoves = new LinkedHashSet<>(possibleMoves);
+                    nextPossibleMoves.remove(move);
+                    minimaxDepthMultipleMovesRec(previousMoveState, depth, maxDepth, nextPossibleMoves);
                 } else {
+                    currentMoveState.value = heuristicValue();
                     if (previousMoveState.chosenChild == null) {
                         previousMoveState.chosenChild = currentMoveState;
+                        previousMoveState.value = currentMoveState.value;
                     }
-                    currentMoveState.gamePhase = game.deepClone();
-                    currentMoveState.value = minPlayer.getOpposingPlayer().heuristicValue();
                     if (prune) {
                         if (previousMoveState.chosenChild != currentMoveState && previousMoveState.chosenChild.value < currentMoveState.value) {
                             currentMoveState.pruned = true;
                         }
                         if (!currentMoveState.pruned) {
-                            if (depth < maxDepth && canKeepGoing() && !game.getBoard().isOver()) {
-                                currentMoveState.value = minimaxDepthRec(currentMoveState, depth + 1, maxDepth, true);
+                            if (!game.getBoard().isOver() && depth < maxDepth) {
+                                LinkedHashSet<Move> nextPossibleMoves = new LinkedHashSet<>(possibleMoves);
+                                nextPossibleMoves.removeAll(currentMoveState.moves);
+                                minimaxDepthRec(currentMoveState, depth + 1, maxDepth, nextPossibleMoves);
                             }
-                            if (previousMoveState.chosenChild.value > currentMoveState.value)
+                            if (previousMoveState.chosenChild.value > currentMoveState.value){
                                 previousMoveState.chosenChild = currentMoveState;
+                                previousMoveState.value = currentMoveState.value;
+                            }
                         }
                     } else {
-                        if (depth < maxDepth && canKeepGoing() && !game.getBoard().isOver()) {
-                            currentMoveState.value = minimaxDepthRec(currentMoveState, depth + 1, maxDepth, true);
+                        if (depth < maxDepth && !game.getBoard().isOver()) {
+                            LinkedHashSet<Move> nextPossibleMoves = new LinkedHashSet<>(possibleMoves);
+                            nextPossibleMoves.removeAll(currentMoveState.moves);
+                            minimaxDepthRec(currentMoveState, depth + 1, maxDepth, nextPossibleMoves);
                         }
                         if (previousMoveState.chosenChild.value > currentMoveState.value) {
                             previousMoveState.chosenChild = currentMoveState;
+                            previousMoveState.value = currentMoveState.value;
                         }
                     }
                 }
                 game.getBoard().undoLastMove();
             }
         }
-        if(previousMoveState.chosenChild != null)
-            return previousMoveState.chosenChild.value;
-        else
-            return player.heuristicValue();
     }
 
-    private void minimaxDepthMultipleMovesRec(MoveState previousMoveState, int depth, int maxDepth, boolean maxOrMin){
-        Game game = previousMoveState.gamePhase;
-        Iterator<Move> iterator = ((LinkedHashSet<Move>) game.getBoard().getPossibleMoves().clone()).iterator();
+    private void minimaxDepthMultipleMovesRec(MoveState previousMoveState, int depth, int maxDepth, LinkedHashSet<Move> possibleMoves){
         boolean firstEntry = true;
-        if (maxOrMin) {
-            while(iterator.hasNext() && canKeepGoing()) {
-                Player maxPlayer = game.getCurrentPlayer();
-                Move move = iterator.next();
+        Player player = game.getCurrentPlayer();
+        if (!previousMoveState.isMax) {
+            for(Move move : possibleMoves){
                 game.getCurrentPlayer().makeMove(move);
                 MoveState currentMoveState;
                 if (firstEntry) {
@@ -177,28 +178,31 @@ public class AIPlayer extends Player implements Serializable {
                     previousMoveState.children.add(currentMoveState);
                 }
                 currentMoveState.moves.add(move);
-                if (maxPlayer == game.getCurrentPlayer() && !game.getBoard().isOver()) {
-                    minimaxDepthMultipleMovesRec(previousMoveState, depth, maxDepth, true);
+                if (player == game.getCurrentPlayer() && !game.getBoard().isOver()) {
+                    LinkedHashSet<Move> nextPossibleMoves = new LinkedHashSet<>(possibleMoves);
+                    nextPossibleMoves.remove(move);
+                    minimaxDepthMultipleMovesRec(previousMoveState, depth, maxDepth, nextPossibleMoves);
                 } else {
-                    currentMoveState.gamePhase = game.deepClone();
-                    currentMoveState.value = maxPlayer.heuristicValue();
+                    currentMoveState.value = heuristicValue();
                     if (previousMoveState.chosenChild == null) {
                         previousMoveState.chosenChild = currentMoveState;
+                        previousMoveState.value = currentMoveState.value;
                     }
-                    if (depth < maxDepth && canKeepGoing() && !game.getBoard().isOver()) {
-                        currentMoveState.value = minimaxDepthRec(currentMoveState, depth + 1, maxDepth, false);
+                    if (depth < maxDepth && !game.getBoard().isOver()) {
+                        LinkedHashSet<Move> nextPossibleMoves = new LinkedHashSet<>(possibleMoves);
+                        nextPossibleMoves.removeAll(currentMoveState.moves);
+                        minimaxDepthRec(currentMoveState, depth + 1, maxDepth, nextPossibleMoves);
                     }
                     if (previousMoveState.chosenChild.value < currentMoveState.value) {
                         previousMoveState.chosenChild = currentMoveState;
+                        previousMoveState.value = currentMoveState.value;
                     }
                 }
                 game.getBoard().undoLastMove();
             }
         }
         else {
-            while(iterator.hasNext() && canKeepGoing()) {
-                Player minPlayer = game.getCurrentPlayer();
-                Move move = iterator.next();
+            for(Move move : possibleMoves){
                 game.getCurrentPlayer().makeMove(move);
                 MoveState currentMoveState;
                 if (firstEntry) {
@@ -212,32 +216,40 @@ public class AIPlayer extends Player implements Serializable {
                     previousMoveState.children.add(currentMoveState);
                 }
                 currentMoveState.moves.add(move);
-                if (minPlayer == game.getCurrentPlayer() && !game.getBoard().isOver()) {
-                    minimaxDepthMultipleMovesRec(previousMoveState, depth, maxDepth, false);
+                if (player == game.getCurrentPlayer() && !game.getBoard().isOver()) {
+                    LinkedHashSet<Move> nextPossibleMoves = new LinkedHashSet<>(possibleMoves);
+                    nextPossibleMoves.remove(move);
+                    minimaxDepthMultipleMovesRec(previousMoveState, depth, maxDepth, nextPossibleMoves);
                 } else {
+                    currentMoveState.value = heuristicValue();
                     if (previousMoveState.chosenChild == null) {
                         previousMoveState.chosenChild = currentMoveState;
+                        previousMoveState.value = currentMoveState.value;
                     }
-                    currentMoveState.gamePhase = game.deepClone();
-                    currentMoveState.value = minPlayer.getOpposingPlayer().heuristicValue();
                     if (prune) {
                         if (previousMoveState.chosenChild != currentMoveState && previousMoveState.chosenChild.value < currentMoveState.value) {
                             currentMoveState.pruned = true;
                         }
                         if (!currentMoveState.pruned) {
-                            if (depth < maxDepth && canKeepGoing() && !game.getBoard().isOver()) {
-                                currentMoveState.value = minimaxDepthRec(currentMoveState, depth + 1, maxDepth, true);
+                            if (depth < maxDepth && !game.getBoard().isOver()) {
+                                LinkedHashSet<Move> nextPossibleMoves = new LinkedHashSet<>(possibleMoves);
+                                nextPossibleMoves.removeAll(currentMoveState.moves);
+                                minimaxDepthRec(currentMoveState, depth + 1, maxDepth, nextPossibleMoves);
                             }
                             if (previousMoveState.chosenChild.value > currentMoveState.value) {
                                 previousMoveState.chosenChild = currentMoveState;
+                                previousMoveState.value = currentMoveState.value;
                             }
                         }
                     } else {
-                        if (depth < maxDepth && canKeepGoing() && !game.getBoard().isOver()) {
-                            currentMoveState.value = minimaxDepthRec(currentMoveState, depth + 1, maxDepth, true);
+                        if (depth < maxDepth && !game.getBoard().isOver()) {
+                            LinkedHashSet<Move> nextPossibleMoves = new LinkedHashSet<>(possibleMoves);
+                            nextPossibleMoves.removeAll(currentMoveState.moves);
+                            minimaxDepthRec(currentMoveState, depth + 1, maxDepth, nextPossibleMoves);
                         }
                         if (previousMoveState.chosenChild.value > currentMoveState.value) {
                             previousMoveState.chosenChild = currentMoveState;
+                            previousMoveState.value = currentMoveState.value;
                         }
                     }
                 }
@@ -246,26 +258,143 @@ public class AIPlayer extends Player implements Serializable {
         }
     }
 
+    private void minimaxLevel(MoveState previousMoveState){
+        Game gamePhase = previousMoveState.gamePhase;
+        Iterator<Move> iterator = ((LinkedHashSet<Move>) gamePhase.getBoard().getPossibleMoves().clone()).iterator();
+        Player player = gamePhase.getCurrentPlayer();
+        if (!previousMoveState.isMax) {
+            while(iterator.hasNext()){
+                Move move = iterator.next();
+                player.makeMove(move);
+                MoveState currentMoveState = new MoveState(true);
+                currentMoveState.moves.add(move);
+                previousMoveState.children.add(currentMoveState);
+                if (player == gamePhase.getCurrentPlayer() && !gamePhase.getBoard().isOver()) {
+                    minimaxLevelMultipleMoves(previousMoveState);
+                } else {
+                    currentMoveState.gamePhase = gamePhase.deepClone();
+                    currentMoveState.value = player.heuristicValue();
+                }
+                gamePhase.getBoard().undoLastMove();
+            }
+        }
+        else {
+            while(iterator.hasNext()){
+                Move move = iterator.next();
+                player.makeMove(move);
+                MoveState currentMoveState = new MoveState(false);
+                currentMoveState.moves.add(move);
+                previousMoveState.children.add(currentMoveState);
+                if (player == gamePhase.getCurrentPlayer() && !gamePhase.getBoard().isOver()) {
+                    minimaxLevelMultipleMoves(previousMoveState);
+                } else {
+                    currentMoveState.gamePhase = gamePhase.deepClone();
+                    currentMoveState.value = player.getOpposingPlayer().heuristicValue();
+                }
+                gamePhase.getBoard().undoLastMove();
+            }
+        }
+    }
+
+    private void minimaxLevelMultipleMoves(MoveState previousMoveState) {
+        Game gamePhase = previousMoveState.gamePhase;
+        Iterator<Move> iterator = ((LinkedHashSet<Move>) gamePhase.getBoard().getPossibleMoves().clone()).iterator();
+        boolean firstEntry = true;
+        Player player = gamePhase.getCurrentPlayer();
+        if (!previousMoveState.isMax) {
+            while(iterator.hasNext() && hasTime()){
+                Move move = iterator.next();
+                player.makeMove(move);
+                MoveState currentMoveState;
+                if (firstEntry) {
+                    currentMoveState = previousMoveState.children.getLast();
+                    firstEntry = false;
+                } else {
+                    currentMoveState = new MoveState(true);
+                    LinkedList<Move> moves = previousMoveState.children.getLast().moves;
+                    for (int i = 0; i < moves.size() - 1; i++)
+                        currentMoveState.moves.add(moves.get(i));
+                    previousMoveState.children.add(currentMoveState);
+                }
+                currentMoveState.moves.add(move);
+                if (player == gamePhase.getCurrentPlayer() && !gamePhase.getBoard().isOver()) {
+                    minimaxLevelMultipleMoves(previousMoveState);
+                } else {
+                    currentMoveState.gamePhase = gamePhase.deepClone();
+                    currentMoveState.value = player.heuristicValue();
+                }
+                gamePhase.getBoard().undoLastMove();
+            }
+        }
+        else {
+            while(iterator.hasNext() && hasTime()){
+                Move move = iterator.next();
+                player.makeMove(move);
+                MoveState currentMoveState;
+                if (firstEntry) {
+                    currentMoveState = previousMoveState.children.getLast();
+                    firstEntry = false;
+                } else {
+                    currentMoveState = new MoveState(false);
+                    LinkedList<Move> moves = previousMoveState.children.getLast().moves;
+                    for (int i = 0; i < moves.size() - 1; i++) {
+                        currentMoveState.moves.add(moves.get(i));
+                    }
+                    previousMoveState.children.add(currentMoveState);
+                }
+                currentMoveState.moves.add(move);
+                if (player == gamePhase.getCurrentPlayer() && !gamePhase.getBoard().isOver()) {
+                    minimaxLevelMultipleMoves(previousMoveState);
+                } else {
+                    currentMoveState.gamePhase = gamePhase.deepClone();
+                    currentMoveState.value = player.getOpposingPlayer().heuristicValue();
+                }
+                gamePhase.getBoard().undoLastMove();
+            }
+        }
+    }
+
     private void minimaxTimeRec(MoveState rootMoveState) {
-        Deque<MoveState> deque = new LinkedList<>();
-        if(!rootMoveState.isMax)
-            minimaxDepthRec(rootMoveState, 0, 0, true);
-        else
-            minimaxDepthRec(rootMoveState, 0, 0, false);
+        minimaxLevel(rootMoveState);
+        Deque<MoveState> deque= new LinkedList<>();
         deque.addAll(rootMoveState.children);
-        while(canKeepGoing() && !deque.isEmpty()){
-            MoveState currentMoveState = deque.getFirst();
+        while(hasTime() && !deque.isEmpty()){
+            MoveState currentMoveState = deque.poll();
             minimaxTimeRec(currentMoveState);
         }
     }
 
-    private boolean canKeepGoing(){
-        if(aiMode == 0){ //time
-            return System.currentTimeMillis() < maxTime;
+    private void refreshBestMove(MoveState rootMoveState) {
+        if(rootMoveState.children.isEmpty()){
+            return;
         }
-        else{ //depth
-            return true;
+        for(MoveState child : rootMoveState.children){
+            if(!child.children.isEmpty()){
+                refreshBestMove(child);
+            }
+            if(rootMoveState.chosenChild == null){
+                rootMoveState.chosenChild = child;
+                rootMoveState.value = child.value;
+            }
+            else{
+                if(rootMoveState.isMax) {
+                    if (rootMoveState.chosenChild.value > child.value) {
+                        rootMoveState.chosenChild = child;
+                        rootMoveState.value = child.value;
+                    }
+                }
+                else{
+                    if (rootMoveState.chosenChild.value < child.value) {
+                        rootMoveState.chosenChild = child;
+                        rootMoveState.value = child.value;
+                    }
+                }
+            }
         }
+    }
+
+    private boolean hasTime(){
+        return System.currentTimeMillis() < maxTime;
     }
 
     /**
@@ -360,7 +489,7 @@ public class AIPlayer extends Player implements Serializable {
         private MoveState chosenChild;
         private LinkedList<MoveState> children;
 
-        MoveState(boolean isMax) {
+        MoveState( boolean isMax) {
             this.moves = new LinkedList<>();
             this.value = null;
             this.pruned = false;

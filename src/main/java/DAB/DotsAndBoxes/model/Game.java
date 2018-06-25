@@ -83,13 +83,24 @@ public class Game implements Serializable {
     }
 
     Game deepClone(){
-        Game result = new Game(board.getSize(), aiType, 0, 0, false);
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(this);
+
+            ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+            ObjectInputStream ois = new ObjectInputStream(bais);
+            return (Game) ois.readObject();
+        } catch (Exception e) {
+            return null;
+        }
+        /*Game result = new Game(board.getSize(), aiType, 0, 0, false);
         result.board.setSquares(board.getSquares().clone());
         result.board.setPossibleMoves(new LinkedHashSet<>(board.getPossibleMoves()));
         result.setCurrentPlayerTurn(currentPlayerTurn);
         result.player1 = new Player(result, player1.getPoints());
         result.player2 = new Player(result, player2.getPoints());
-        return result;
+        return result;*/
     }
 
     private void setCurrentPlayerTurn(int currentPlayerTurn) {

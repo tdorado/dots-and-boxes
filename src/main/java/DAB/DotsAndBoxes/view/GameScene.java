@@ -30,10 +30,14 @@ public class GameScene extends Scene {
                         playTurnPlayer(event);
                         currentPlayer = App.getInstance().getCurrentPlayer();
                         if (currentPlayer.isAI()) {
+                            System.out.println("AI Calculating move:");
+                            boardPane.getAiMoveText().setVisible(true);
                             ((AIPlayer) currentPlayer).calculateAndMakeMove();
                             boardPane.refreshBoardMoves();
                         }
                     } else {
+                        System.out.println("AI Calculating move:");
+                        boardPane.getAiMoveText().setVisible(true);
                         ((AIPlayer) currentPlayer).calculateAndMakeMove();
                         boardPane.refreshBoardMoves();
                     }

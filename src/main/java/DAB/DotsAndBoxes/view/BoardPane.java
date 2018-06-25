@@ -33,6 +33,7 @@ public class BoardPane extends Pane {
     private Text player2PointsText = new Text(650, 350, "0");
     private Text errorFileText = new Text(650, 375, "Error while creating file");
     private Text gameEndedText = new Text(650, 400, "Game finished");
+    private Text aiMoveText = new Text(650, 400, "AI calculating next moves");
 
     public BoardPane() {
         initializeBoard();
@@ -66,6 +67,7 @@ public class BoardPane extends Pane {
             gameEndedText.setVisible(true);
         }
         errorFileText.setVisible(false);
+        aiMoveText.setVisible(false);
     }
 
     private void initializeBoard() {
@@ -190,10 +192,16 @@ public class BoardPane extends Pane {
         if (!App.getInstance().getBoard().isOver()) {
             Player actualPlayer = App.getInstance().getCurrentPlayer();
             if (actualPlayer.isAI()) {
+                System.out.println("AI Calculating move:");
+                aiMoveText.setVisible(true);
                 ((AIPlayer)actualPlayer).calculateAndMakeMove();
                 refreshBoardMoves();
             }
         }
+    }
+
+    public Text getAiMoveText(){
+        return aiMoveText;
     }
 
     private void undoLastMove(Move lastMoveDone) {
