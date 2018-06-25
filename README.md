@@ -27,7 +27,7 @@ or
 $ java -jar java -jar target/dots-and-boxes.jar -size [n] -ai [m] -mode [time|depth] -param [k] -prune [on|off] -load [file]
 ```
 
-##The values of the arguments are:
+## The values of the arguments are:
 
 * -size [n]: it's the size of the board.
 * -ai [m]: it's the rol of the ai: 0 HUMAN vs HUMAN, 1 AI vs HUMAN, 2 HUMAN vs AI, 3 AI vs AI.
@@ -35,3 +35,9 @@ $ java -jar java -jar target/dots-and-boxes.jar -size [n] -ai [m] -mode [time|de
 * -param [k]: it's the number of the last argument. When "time" it's seconds. When “depth” it's the depth of the minimax tree.
 * -prune [on|off]: turns on or off the prune of the minimax tree.
 * -load [file]: loads a saved game from file.
+
+## On release folder there is the compiled .jar file if necessary with some saved games to test it, so the line to execute would be for example:
+
+```
+$ java -jar java -jar release/dots-and-boxes.jar -size 3 -ai 2 -mode depth -param 1 -prune on -load game3x3
+```
