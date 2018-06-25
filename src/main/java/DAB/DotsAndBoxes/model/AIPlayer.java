@@ -57,12 +57,12 @@ public class AIPlayer extends Player implements Serializable {
     public void calculateAndMakeMove() {
         LinkedList<Move> moves = minimax();
         for (Move move : moves) {
-            this.makeMove(move);
+            makeMove(move);
         }
     }
 
     /**
-     * Method that gets the moves that the AI has to make
+     * Method that gets calls the minimax mode chosen with the correct parameters.
      *
      * @return List of moves to be made by de AIPlayer
      */
@@ -80,6 +80,13 @@ public class AIPlayer extends Player implements Serializable {
         return lastMoveState.chosenChild.moves;
     }
 
+    /**
+     * Method that forms and chooses the MoveState to do, by doing a minimax by depth.
+     * @param previousMoveState MoveState
+     * @param depth int
+     * @param maxDepth int
+     * @param possibleMoves LinkedHashSet of Move
+     */
     private void minimaxDepthRec(MoveState previousMoveState, int depth, int maxDepth, LinkedHashSet<Move> possibleMoves) {
         Player player = game.getCurrentPlayer();
         if (!previousMoveState.isMax) {
@@ -159,6 +166,13 @@ public class AIPlayer extends Player implements Serializable {
         }
     }
 
+    /**
+     * Method for the plays of more than 1 move for the minimax by depth.
+     * @param previousMoveState MoveState
+     * @param depth int
+     * @param maxDepth int
+     * @param possibleMoves LinkedHashSet of Move
+     */
     private void minimaxDepthMultipleMovesRec(MoveState previousMoveState, int depth, int maxDepth, LinkedHashSet<Move> possibleMoves){
         boolean firstEntry = true;
         Player player = game.getCurrentPlayer();
@@ -258,12 +272,30 @@ public class AIPlayer extends Player implements Serializable {
         }
     }
 
+    /**
+     * Method that forms the tree on the given time, it iterates while calling minimaxLevel
+     * @param rootMoveState MoveState
+     */
+    private void minimaxTimeRec(MoveState rootMoveState) {
+        minimaxLevel(rootMoveState);
+        Deque<MoveState> deque= new LinkedList<>();
+        deque.addAll(rootMoveState.children);
+        while(hasTime() && !deque.isEmpty()){
+            MoveState currentMoveState = deque.poll();
+            minimaxTimeRec(currentMoveState);
+        }
+    }
+
+    /**
+     * Method used on minimax by time.
+     * @param previousMoveState MoveState
+     */
     private void minimaxLevel(MoveState previousMoveState){
         Game gamePhase = previousMoveState.gamePhase;
         Iterator<Move> iterator = ((LinkedHashSet<Move>) gamePhase.getBoard().getPossibleMoves().clone()).iterator();
         Player player = gamePhase.getCurrentPlayer();
         if (!previousMoveState.isMax) {
-            while(iterator.hasNext()){
+            while(iterator.hasNext() && hasTime()){
                 Move move = iterator.next();
                 player.makeMove(move);
                 MoveState currentMoveState = new MoveState(true);
@@ -279,7 +311,7 @@ public class AIPlayer extends Player implements Serializable {
             }
         }
         else {
-            while(iterator.hasNext()){
+            while(iterator.hasNext() && hasTime()){
                 Move move = iterator.next();
                 player.makeMove(move);
                 MoveState currentMoveState = new MoveState(false);
@@ -294,8 +326,19 @@ public class AIPlayer extends Player implements Serializable {
                 gamePhase.getBoard().undoLastMove();
             }
         }
+        if(previousMoveState.children.isEmpty()){
+            if(!previousMoveState.isMax)
+                previousMoveState.value = player.heuristicValue();
+            else{
+                previousMoveState.value = player.getOpposingPlayer().heuristicValue();
+            }
+        }
     }
 
+    /**
+     * Auxiliar method of minimaxLevel, only used for plays of more than 1 move.
+     * @param previousMoveState MoveState
+     */
     private void minimaxLevelMultipleMoves(MoveState previousMoveState) {
         Game gamePhase = previousMoveState.gamePhase;
         Iterator<Move> iterator = ((LinkedHashSet<Move>) gamePhase.getBoard().getPossibleMoves().clone()).iterator();
@@ -352,18 +395,20 @@ public class AIPlayer extends Player implements Serializable {
                 gamePhase.getBoard().undoLastMove();
             }
         }
-    }
-
-    private void minimaxTimeRec(MoveState rootMoveState) {
-        minimaxLevel(rootMoveState);
-        Deque<MoveState> deque= new LinkedList<>();
-        deque.addAll(rootMoveState.children);
-        while(hasTime() && !deque.isEmpty()){
-            MoveState currentMoveState = deque.poll();
-            minimaxTimeRec(currentMoveState);
+        if(previousMoveState.children.isEmpty()){
+            if(!previousMoveState.isMax)
+                previousMoveState.value = player.heuristicValue();
+            else{
+                previousMoveState.value = player.getOpposingPlayer().heuristicValue();
+            }
         }
     }
 
+    /**
+     * Method used at when the minimax time tree is formed, to chose the best move with the tree that it was able to
+     * form on that time.
+     * @param rootMoveState MoveState
+     */
     private void refreshBestMove(MoveState rootMoveState) {
         if(rootMoveState.children.isEmpty()){
             return;
@@ -441,9 +486,9 @@ public class AIPlayer extends Player implements Serializable {
     /**
      * Recurrence for the dot file
      *
-     * @param writer     writer
-     * @param moveState  current MoveState
-     * @param nodeNumber current node index
+     * @param writer PrintWriter
+     * @param moveState MoveState
+     * @param nodeNumber int
      * @return int of how many nodes were printed
      */
     private int makeDotFileRec(PrintWriter writer, MoveState moveState, int nodeNumber) {
@@ -479,6 +524,7 @@ public class AIPlayer extends Player implements Serializable {
 
     /**
      * Class used to save all the recurrences of the minimax search, used to create dot file
+     * gamePhase only used on minimax by Time
      */
     private class MoveState {
         private LinkedList<Move> moves;
