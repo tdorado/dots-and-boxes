@@ -1,10 +1,7 @@
 package DAB.DotsAndBoxes.model;
 
 import java.io.*;
-import java.util.Deque;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
+import java.util.*;
 
 public class AIPlayer extends Player implements Serializable {
 
@@ -278,10 +275,10 @@ public class AIPlayer extends Player implements Serializable {
      */
     private void minimaxTimeRec(MoveState rootMoveState) {
         minimaxLevel(rootMoveState);
-        Deque<MoveState> deque= new LinkedList<>();
-        deque.addAll(rootMoveState.children);
-        while(hasTime() && !deque.isEmpty()){
-            MoveState currentMoveState = deque.poll();
+        Queue<MoveState> queue= new LinkedList<>();
+        queue.addAll(rootMoveState.children);
+        while(hasTime() && !queue.isEmpty()){
+            MoveState currentMoveState = queue.poll();
             minimaxTimeRec(currentMoveState);
         }
     }
@@ -422,7 +419,7 @@ public class AIPlayer extends Player implements Serializable {
                 rootMoveState.value = child.value;
             }
             else{
-                if(rootMoveState.isMax) {
+                if(!rootMoveState.isMax) {
                     if (rootMoveState.chosenChild.value > child.value) {
                         rootMoveState.chosenChild = child;
                         rootMoveState.value = child.value;
